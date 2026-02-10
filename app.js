@@ -1,4 +1,3 @@
-
 // Register Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js')
@@ -34,7 +33,8 @@ let timerInterval = null;
 let currentType = null;
 
 let settings = {
-    notificationType: 'none',
+    sound: false,
+    vibrate: false,
     chickenHours: 5,
     beefHours: 6
 };
@@ -52,9 +52,23 @@ function saveSettings() {
 }
 
 function updateSettingsUI() {
-    document.querySelectorAll('.notification-option').forEach(opt => opt.classList.remove('selected'));
-    document.getElementById('notif' + settings.notificationType.charAt(0).toUpperCase() + settings.notificationType.slice(1)).classList.add('selected');
+    // Update checkboxes
+    const soundCheckbox = document.getElementById('soundCheckbox');
+    const vibrateCheckbox = document.getElementById('vibrateCheckbox');
     
+    if (settings.sound) {
+        soundCheckbox.classList.add('checked');
+    } else {
+        soundCheckbox.classList.remove('checked');
+    }
+    
+    if (settings.vibrate) {
+        vibrateCheckbox.classList.add('checked');
+    } else {
+        vibrateCheckbox.classList.remove('checked');
+    }
+    
+    // Update time displays
     document.getElementById('chickenTime').textContent = formatHours(settings.chickenHours);
     document.getElementById('beefTime').textContent = formatHours(settings.beefHours);
     
@@ -64,19 +78,19 @@ function updateSettingsUI() {
 
 function formatHours(hours) {
     if (hours === Math.floor(hours)) {
-        return hours + ' שע׳';
+        return hours + ' שעות';
     } else {
         const h = Math.floor(hours);
-        return h + ':30 שע׳';
+        return h + ':30 שעות';
     }
 }
 
-function setNotificationType(type) {
-    settings.notificationType = type;
+function toggleNotification(type) {
+    settings[type] = !settings[type];
     saveSettings();
     updateSettingsUI();
     
-    if (navigator.vibrate && (type === 'vibrate' || type === 'both')) {
+    if (navigator.vibrate && type === 'vibrate' && settings[type]) {
         navigator.vibrate(100);
     }
 }
@@ -127,6 +141,12 @@ function cancelTimer() {
         document.getElementById('cancelBtn').style.display = 'none';
         updateEndTimeMessage();
         
+        // Show title again
+        document.getElementById('pageTitle').classList.remove('hidden');
+        
+        // Remove timer-active class
+        document.body.classList.remove('timer-active');
+        
         resetButtons();
         
         localStorage.removeItem('timerEndTime');
@@ -140,11 +160,11 @@ function resetButtons() {
         btn.classList.remove('active');
     });
     
-    const chickenBtn = document.querySelector('.timer-button.chicken');
-    const beefBtn = document.querySelector('.timer-button.beef');
+    const chickenBtn = document.querySelector('.timer-button:nth-child(1)');
+    const beefBtn = document.querySelector('.timer-button:nth-child(2)');
     
-    chickenBtn.innerHTML = `<div class="icon">🍗</div><div>עוף</div><div id="chickenHoursDisplay" style="font-size: 14px; opacity: 0.9;">${formatHours(settings.chickenHours)}</div>`;
-    beefBtn.innerHTML = `<div class="icon">🥩</div><div>בקר</div><div id="beefHoursDisplay" style="font-size: 14px; opacity: 0.9;">${formatHours(settings.beefHours)}</div>`;
+    chickenBtn.innerHTML = `<div class="icon">🍗</div><div>עוף</div><div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.chickenHours)}</div>`;
+    beefBtn.innerHTML = `<div class="icon">🥩</div><div>בקר</div><div id="beefHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.beefHours)}</div>`;
 }
 
 function startTimer(type) {
@@ -166,17 +186,22 @@ function startTimer(type) {
     currentType = type;
     endTime = new Date().getTime() + (hours * 60 * 60 * 1000);
     
+    // Hide title
+    document.getElementById('pageTitle').classList.add('hidden');
+    
+    // Add timer-active class to body
+    document.body.classList.add('timer-active');
+    
     document.getElementById('cancelBtn').style.display = 'inline-block';
     resetButtons();
     
-    const activeBtn = type === 'chicken' ? 
-        document.querySelector('.timer-button.chicken') : 
-        document.querySelector('.timer-button.beef');
+    const buttons = document.querySelectorAll('.timer-button');
+    const activeBtn = type === 'chicken' ? buttons[0] : buttons[1];
         
     if (activeBtn) {
         activeBtn.classList.add('active');
         const emoji = type === 'chicken' ? '🍗' : '🥩';
-        activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 14px; opacity: 0.9;">פועל...</div>`;
+        activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 16px; opacity: 0.9;">פועל...</div>`;
     }
     
     document.getElementById('status').textContent = `טיימר ${typeHebrew} של ${formatHours(hours)} מתחיל עכשיו!`;
@@ -205,13 +230,19 @@ function updateDisplay() {
         document.getElementById('cancelBtn').style.display = 'none';
         updateEndTimeMessage();
         
+        // Show title again
+        document.getElementById('pageTitle').classList.remove('hidden');
+        
+        // Remove timer-active class
+        document.body.classList.remove('timer-active');
+        
         resetButtons();
         
-        if (settings.notificationType === 'sound' || settings.notificationType === 'both') {
+        if (settings.sound) {
             alert(`טיימר ${typeHebrew} הסתיים! ✓`);
         }
         
-        if ((settings.notificationType === 'vibrate' || settings.notificationType === 'both') && navigator.vibrate) {
+        if (settings.vibrate && navigator.vibrate) {
             navigator.vibrate([200, 100, 200, 100, 200]);
         }
         
@@ -244,16 +275,21 @@ window.onload = function() {
         const now = new Date().getTime();
         
         if (endTime > now) {
+            // Hide title
+            document.getElementById('pageTitle').classList.add('hidden');
+            
+            // Add timer-active class
+            document.body.classList.add('timer-active');
+            
             document.getElementById('cancelBtn').style.display = 'inline-block';
             
-            const activeBtn = savedType === 'chicken' ? 
-                document.querySelector('.timer-button.chicken') : 
-                document.querySelector('.timer-button.beef');
+            const buttons = document.querySelectorAll('.timer-button');
+            const activeBtn = savedType === 'chicken' ? buttons[0] : buttons[1];
             
             if (activeBtn) {
                 activeBtn.classList.add('active');
                 const typeHebrew = savedType === 'chicken' ? 'עוף' : 'בקר';
-                activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 14px; opacity: 0.9;">פועל...</div>`;
+                activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 16px; opacity: 0.9;">פועל...</div>`;
             }
             
             const typeHebrew = savedType === 'chicken' ? 'עוף' : 'בקר';
