@@ -31,6 +31,7 @@ function closeInstallPrompt() {
 let endTime = null;
 let timerInterval = null;
 let currentType = null;
+let statusTimeout = null;
 
 let settings = {
     sound: false,
@@ -52,7 +53,6 @@ function saveSettings() {
 }
 
 function updateSettingsUI() {
-    // Update checkboxes
     const soundCheckbox = document.getElementById('soundCheckbox');
     const vibrateCheckbox = document.getElementById('vibrateCheckbox');
     
@@ -68,7 +68,6 @@ function updateSettingsUI() {
         vibrateCheckbox.classList.remove('checked');
     }
     
-    // Update time displays
     document.getElementById('chickenTime').textContent = formatHours(settings.chickenHours);
     document.getElementById('beefTime').textContent = formatHours(settings.beefHours);
     
@@ -133,18 +132,22 @@ function cancelTimer() {
             timerInterval = null;
         }
         
+        if (statusTimeout) {
+            clearTimeout(statusTimeout);
+            statusTimeout = null;
+        }
+        
         endTime = null;
         currentType = null;
         
         document.getElementById('timeDisplay').textContent = '';
         document.getElementById('status').textContent = '';
+        document.getElementById('permanentStatus').textContent = '';
+        document.getElementById('permanentStatus').classList.remove('show');
         document.getElementById('cancelBtn').style.display = 'none';
         updateEndTimeMessage();
         
-        // Show title again
         document.getElementById('pageTitle').classList.remove('hidden');
-        
-        // Remove timer-active class
         document.body.classList.remove('timer-active');
         
         resetButtons();
@@ -183,13 +186,15 @@ function startTimer(type) {
         timerInterval = null;
     }
 
+    if (statusTimeout) {
+        clearTimeout(statusTimeout);
+        statusTimeout = null;
+    }
+
     currentType = type;
     endTime = new Date().getTime() + (hours * 60 * 60 * 1000);
     
-    // Hide title
     document.getElementById('pageTitle').classList.add('hidden');
-    
-    // Add timer-active class to body
     document.body.classList.add('timer-active');
     
     document.getElementById('cancelBtn').style.display = 'inline-block';
@@ -204,7 +209,21 @@ function startTimer(type) {
         activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 16px; opacity: 0.9;">פועל...</div>`;
     }
     
-    document.getElementById('status').textContent = `טיימר ${typeHebrew} של ${formatHours(hours)} מתחיל עכשיו!`;
+    // Show initial status message
+    const statusEl = document.getElementById('status');
+    const permanentStatusEl = document.getElementById('permanentStatus');
+    
+    statusEl.textContent = `טיימר ${typeHebrew} של ${formatHours(hours)} מתחיל עכשיו!`;
+    statusEl.classList.remove('fade-out');
+    permanentStatusEl.textContent = `טיימר ${typeHebrew} של ${formatHours(hours)} פעיל`;
+    permanentStatusEl.classList.remove('show');
+    
+    // After 3 seconds, fade out initial message and show permanent status
+    statusTimeout = setTimeout(() => {
+        statusEl.classList.add('fade-out');
+        permanentStatusEl.classList.add('show');
+    }, 3000);
+    
     updateEndTimeMessage();
     updateDisplay();
     timerInterval = setInterval(updateDisplay, 1000);
@@ -224,16 +243,22 @@ function updateDisplay() {
     if (distance < 0) {
         clearInterval(timerInterval);
         timerInterval = null;
+        
+        if (statusTimeout) {
+            clearTimeout(statusTimeout);
+            statusTimeout = null;
+        }
+        
         document.getElementById('timeDisplay').textContent = '00:00:00';
         const typeHebrew = currentType === 'chicken' ? 'עוף' : 'בקר';
         document.getElementById('status').textContent = `טיימר ${typeHebrew} הסתיים! 🎉`;
+        document.getElementById('status').classList.remove('fade-out');
+        document.getElementById('permanentStatus').textContent = '';
+        document.getElementById('permanentStatus').classList.remove('show');
         document.getElementById('cancelBtn').style.display = 'none';
         updateEndTimeMessage();
         
-        // Show title again
         document.getElementById('pageTitle').classList.remove('hidden');
-        
-        // Remove timer-active class
         document.body.classList.remove('timer-active');
         
         resetButtons();
@@ -275,10 +300,7 @@ window.onload = function() {
         const now = new Date().getTime();
         
         if (endTime > now) {
-            // Hide title
             document.getElementById('pageTitle').classList.add('hidden');
-            
-            // Add timer-active class
             document.body.classList.add('timer-active');
             
             document.getElementById('cancelBtn').style.display = 'inline-block';
@@ -293,7 +315,12 @@ window.onload = function() {
             }
             
             const typeHebrew = savedType === 'chicken' ? 'עוף' : 'בקר';
-            document.getElementById('status').textContent = `ממשיך טיימר ${typeHebrew}...`;
+            const hours = savedType === 'chicken' ? settings.chickenHours : settings.beefHours;
+            
+            // Show permanent status immediately when resuming
+            document.getElementById('permanentStatus').textContent = `טיימר ${typeHebrew} של ${formatHours(hours)} פעיל`;
+            document.getElementById('permanentStatus').classList.add('show');
+            
             updateEndTimeMessage();
             updateDisplay();
             timerInterval = setInterval(updateDisplay, 1000);
