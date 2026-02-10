@@ -185,6 +185,21 @@
         .permanent-status.show {
             opacity: 1;
         }
+
+        .completion-message {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            margin-top: 20px;
+            text-shadow: 0 3px 15px rgba(0,0,0,0.5);
+            min-height: 35px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .completion-message.show {
+            opacity: 1;
+        }
         
         .end-time-message {
             font-size: 24px;
@@ -237,22 +252,23 @@
             background: rgba(74, 222, 128, 0.9);
             color: white;
         }
+
+        .torah-quote {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Frank Ruhl Libre', serif;
+            font-size: 22px;
+            font-weight: 400;
+            color: black;
+            text-shadow: 0 0 10px white, 0 0 20px white;
+            letter-spacing: 1px;
+            opacity: 0.85;
+            z-index: 10;
+            white-space: nowrap;
+        }
         
-.torah-quote {
-    position: fixed;
-    bottom: 25px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'Frank Ruhl Libre', serif;
-    font-size: 22px;
-    font-weight: 400;
-    color: black;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.7);
-    letter-spacing: 1px;
-    opacity: 0.85;
-    z-index: 10;
-    white-space: nowrap;
-}
         .modal {
             display: none;
             position: fixed;
@@ -524,6 +540,7 @@
         <div id="timeDisplay" class="time-display"></div>
         <div id="status" class="status"></div>
         <div id="permanentStatus" class="permanent-status"></div>
+        <div id="completionMessage" class="completion-message"></div>
         
         <div class="control-buttons">
             <button id="cancelBtn" class="control-btn cancel-btn" onclick="cancelTimer()" style="display: none;">

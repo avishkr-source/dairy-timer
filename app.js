@@ -144,6 +144,8 @@ function cancelTimer() {
         document.getElementById('status').textContent = '';
         document.getElementById('permanentStatus').textContent = '';
         document.getElementById('permanentStatus').classList.remove('show');
+        document.getElementById('completionMessage').textContent = '';
+        document.getElementById('completionMessage').classList.remove('show');
         document.getElementById('cancelBtn').style.display = 'none';
         updateEndTimeMessage();
         
@@ -198,6 +200,9 @@ function startTimer(type) {
     document.body.classList.add('timer-active');
     
     document.getElementById('cancelBtn').style.display = 'inline-block';
+    document.getElementById('completionMessage').textContent = '';
+    document.getElementById('completionMessage').classList.remove('show');
+    
     resetButtons();
     
     const buttons = document.querySelectorAll('.timer-button');
@@ -209,7 +214,6 @@ function startTimer(type) {
         activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 16px; opacity: 0.9;">פועל...</div>`;
     }
     
-    // Show initial status message
     const statusEl = document.getElementById('status');
     const permanentStatusEl = document.getElementById('permanentStatus');
     
@@ -218,7 +222,6 @@ function startTimer(type) {
     permanentStatusEl.textContent = `טיימר ${typeHebrew} של ${formatHours(hours)} פעיל`;
     permanentStatusEl.classList.remove('show');
     
-    // After 3 seconds, fade out initial message and show permanent status
     statusTimeout = setTimeout(() => {
         statusEl.classList.add('fade-out');
         permanentStatusEl.classList.add('show');
@@ -236,6 +239,29 @@ function startTimer(type) {
     localStorage.setItem('timerType', type);
 }
 
+// Beep sound function
+function playBeep() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (e) {
+        console.log('Audio not supported');
+    }
+}
+
 function updateDisplay() {
     const now = new Date().getTime();
     const distance = endTime - now;
@@ -250,25 +276,28 @@ function updateDisplay() {
         }
         
         document.getElementById('timeDisplay').textContent = '00:00:00';
-        const typeHebrew = currentType === 'chicken' ? 'עוף' : 'בקר';
-        document.getElementById('status').textContent = `טיימר ${typeHebrew} הסתיים! 🎉`;
+        document.getElementById('status').textContent = '';
         document.getElementById('status').classList.remove('fade-out');
         document.getElementById('permanentStatus').textContent = '';
         document.getElementById('permanentStatus').classList.remove('show');
-        document.getElementById('cancelBtn').style.display = 'none';
-        updateEndTimeMessage();
         
-        document.getElementById('pageTitle').classList.remove('hidden');
-        document.body.classList.remove('timer-active');
+        const completionMsg = document.getElementById('completionMessage');
+        completionMsg.textContent = 'הסתיימה ההמתנה! אתה חלבי 🥳';
+        completionMsg.classList.add('show');
+        
+        document.getElementById('endTimeMessage').textContent = '';
         
         resetButtons();
         
+        // Play notifications
         if (settings.sound) {
-            alert(`טיימר ${typeHebrew} הסתיים! ✓`);
+            playBeep();
+            setTimeout(() => playBeep(), 300);
+            setTimeout(() => playBeep(), 600);
         }
         
         if (settings.vibrate && navigator.vibrate) {
-            navigator.vibrate([200, 100, 200, 100, 200]);
+            navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
         }
         
         localStorage.removeItem('timerEndTime');
@@ -317,7 +346,6 @@ window.onload = function() {
             const typeHebrew = savedType === 'chicken' ? 'עוף' : 'בקר';
             const hours = savedType === 'chicken' ? settings.chickenHours : settings.beefHours;
             
-            // Show permanent status immediately when resuming
             document.getElementById('permanentStatus').textContent = `טיימר ${typeHebrew} של ${formatHours(hours)} פעיל`;
             document.getElementById('permanentStatus').classList.add('show');
             
