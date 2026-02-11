@@ -39,6 +39,11 @@ let endTime = null;
 let timerInterval = null;
 let currentType = null;
 let statusTimeout = null;
+let debugMode = false;
+
+// Debug mode activation
+let tapCount = 0;
+let tapTimer = null;
 
 let settings = {
     sound: false,
@@ -52,11 +57,58 @@ function loadSettings() {
     if (saved) {
         settings = JSON.parse(saved);
     }
+    
+    // Load debug mode state
+    const savedDebug = localStorage.getItem('debugMode');
+    if (savedDebug === 'true') {
+        debugMode = true;
+        updateDebugUI();
+    }
+    
     updateSettingsUI();
 }
 
 function saveSettings() {
     localStorage.setItem('timerSettings', JSON.stringify(settings));
+}
+
+function toggleDebugMode() {
+    tapCount++;
+    
+    if (tapTimer) clearTimeout(tapTimer);
+    
+    if (tapCount === 5) {
+        debugMode = !debugMode;
+        localStorage.setItem('debugMode', debugMode.toString());
+        updateDebugUI();
+        
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100, 50, 100]);
+        }
+        
+        const msg = debugMode ? 'מצב Debug הופעל! ⚡\n\nכעת תראה כפתור צהוב שלישי עם טיימר של דקה אחת' : 'מצב Debug כבוי';
+        alert(msg);
+        tapCount = 0;
+    } else {
+        tapTimer = setTimeout(() => {
+            tapCount = 0;
+        }, 1000);
+    }
+}
+
+function updateDebugUI() {
+    const debugBtn = document.querySelector('.timer-button.debug');
+    const title = document.getElementById('pageTitle');
+    
+    if (debugMode) {
+        if (debugBtn) debugBtn.style.display = 'flex';
+        title.style.color = '#ffeb3b';
+        title.textContent = 'מה אכלת? ⚡';
+    } else {
+        if (debugBtn) debugBtn.style.display = 'none';
+        title.style.color = 'white';
+        title.textContent = 'מה אכלת?';
+    }
 }
 
 function updateSettingsUI() {
@@ -78,8 +130,11 @@ function updateSettingsUI() {
     document.getElementById('chickenTime').textContent = formatHours(settings.chickenHours);
     document.getElementById('beefTime').textContent = formatHours(settings.beefHours);
     
-    document.getElementById('chickenHoursDisplay').textContent = formatHours(settings.chickenHours);
-    document.getElementById('beefHoursDisplay').textContent = formatHours(settings.beefHours);
+    const chickenDisplay = document.getElementById('chickenHoursDisplay');
+    const beefDisplay = document.getElementById('beefHoursDisplay');
+    
+    if (chickenDisplay) chickenDisplay.textContent = formatHours(settings.chickenHours);
+    if (beefDisplay) beefDisplay.textContent = formatHours(settings.beefHours);
 }
 
 function formatHours(hours) {
@@ -172,19 +227,41 @@ function resetButtons() {
         btn.classList.remove('active');
     });
     
-    const chickenBtn = document.querySelector('.timer-button:nth-child(1)');
-    const beefBtn = document.querySelector('.timer-button:nth-child(2)');
+    const chickenBtn = document.querySelector('.timer-button.chicken');
+    const beefBtn = document.querySelector('.timer-button.beef');
+    const debugBtn = document.querySelector('.timer-button.debug');
     
-    chickenBtn.innerHTML = `<div class="icon">🍗</div><div>עוף</div><div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.chickenHours)}</div>`;
-    beefBtn.innerHTML = `<div class="icon">🥩</div><div>בקר</div><div id="beefHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.beefHours)}</div>`;
+    if (chickenBtn) {
+        chickenBtn.innerHTML = `<div class="icon">🍗</div><div>עוף</div><div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.chickenHours)}</div>`;
+    }
+    
+    if (beefBtn) {
+        beefBtn.innerHTML = `<div class="icon">🥩</div><div>בקר</div><div id="beefHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.beefHours)}</div>`;
+    }
+    
+    if (debugBtn && debugMode) {
+        debugBtn.innerHTML = `<div class="icon">⚡</div><div>Debug</div><div style="font-size: 16px; opacity: 0.9;">1 דק׳</div>`;
+    }
 }
 
 function startTimer(type) {
-    const hours = type === 'chicken' ? settings.chickenHours : settings.beefHours;
-    const typeHebrew = type === 'chicken' ? 'עוף' : 'בקר';
+    let hours;
+    let typeHebrew;
+    let timeText;
+    
+    if (type === 'debug') {
+        hours = 1 / 60; // 1 minute in hours
+        typeHebrew = 'Debug';
+        timeText = '1 דק׳';
+    } else {
+        hours = type === 'chicken' ? settings.chickenHours : settings.beefHours;
+        typeHebrew = type === 'chicken' ? 'עוף' : 'בקר';
+        timeText = formatHours(hours);
+    }
     
     if (timerInterval && endTime) {
-        const confirmRestart = confirm(`טיימר ${currentType === 'chicken' ? 'עוף' : 'בקר'} כבר פועל. האם להפסיק ולהתחיל טיימר ${typeHebrew} חדש?`);
+        const currentTypeHebrew = currentType === 'debug' ? 'Debug' : (currentType === 'chicken' ? 'עוף' : 'בקר');
+        const confirmRestart = confirm(`טיימר ${currentTypeHebrew} כבר פועל. האם להפסיק ולהתחיל טיימר ${typeHebrew} חדש?`);
         if (!confirmRestart) {
             return;
         }
@@ -216,20 +293,27 @@ function startTimer(type) {
     resetButtons();
     
     const buttons = document.querySelectorAll('.timer-button');
-    const activeBtn = type === 'chicken' ? buttons[0] : buttons[1];
+    let activeBtn;
+    
+    if (type === 'debug') {
+        activeBtn = document.querySelector('.timer-button.debug');
+    } else if (type === 'chicken') {
+        activeBtn = buttons[0];
+    } else {
+        activeBtn = buttons[1];
+    }
         
     if (activeBtn) {
         activeBtn.classList.add('active');
-        const emoji = type === 'chicken' ? '🍗' : '🥩';
         activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 16px; opacity: 0.9;">פועל...</div>`;
     }
     
     const statusEl = document.getElementById('status');
     const permanentStatusEl = document.getElementById('permanentStatus');
     
-    statusEl.textContent = `טיימר ${typeHebrew} של ${formatHours(hours)} מתחיל עכשיו!`;
+    statusEl.textContent = `טיימר ${typeHebrew} של ${timeText} מתחיל עכשיו!`;
     statusEl.classList.remove('fade-out');
-    permanentStatusEl.textContent = `טיימר ${typeHebrew} של ${formatHours(hours)} פעיל`;
+    permanentStatusEl.textContent = `טיימר ${typeHebrew} של ${timeText} פעיל`;
     permanentStatusEl.classList.remove('show');
     
     statusTimeout = setTimeout(() => {
@@ -353,6 +437,13 @@ function updateDisplay() {
 window.onload = function() {
     loadSettings();
     
+    // Add debug mode trigger to title
+    const title = document.getElementById('pageTitle');
+    if (title) {
+        title.addEventListener('click', toggleDebugMode);
+        title.style.cursor = 'pointer';
+    }
+    
     const savedEndTime = localStorage.getItem('timerEndTime');
     const savedType = localStorage.getItem('timerType');
     
@@ -368,18 +459,33 @@ window.onload = function() {
             document.getElementById('cancelBtn').style.display = 'inline-block';
             
             const buttons = document.querySelectorAll('.timer-button');
-            const activeBtn = savedType === 'chicken' ? buttons[0] : buttons[1];
+            let activeBtn;
+            
+            if (savedType === 'debug') {
+                activeBtn = document.querySelector('.timer-button.debug');
+            } else if (savedType === 'chicken') {
+                activeBtn = buttons[0];
+            } else {
+                activeBtn = buttons[1];
+            }
             
             if (activeBtn) {
                 activeBtn.classList.add('active');
-                const typeHebrew = savedType === 'chicken' ? 'עוף' : 'בקר';
+                const typeHebrew = savedType === 'debug' ? 'Debug' : (savedType === 'chicken' ? 'עוף' : 'בקר');
                 activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 16px; opacity: 0.9;">פועל...</div>`;
             }
             
-            const typeHebrew = savedType === 'chicken' ? 'עוף' : 'בקר';
-            const hours = savedType === 'chicken' ? settings.chickenHours : settings.beefHours;
+            const typeHebrew = savedType === 'debug' ? 'Debug' : (savedType === 'chicken' ? 'עוף' : 'בקר');
+            let timeText;
             
-            document.getElementById('permanentStatus').textContent = `טיימר ${typeHebrew} של ${formatHours(hours)} פעיל`;
+            if (savedType === 'debug') {
+                timeText = '1 דק׳';
+            } else {
+                const hours = savedType === 'chicken' ? settings.chickenHours : settings.beefHours;
+                timeText = formatHours(hours);
+            }
+            
+            document.getElementById('permanentStatus').textContent = `טיימר ${typeHebrew} של ${timeText} פעיל`;
             document.getElementById('permanentStatus').classList.add('show');
             
             updateEndTimeMessage();

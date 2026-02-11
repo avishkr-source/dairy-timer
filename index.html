@@ -93,7 +93,8 @@
             margin-bottom: 30px;
             text-shadow: 0 3px 15px rgba(0,0,0,0.5);
             opacity: 1;
-            transition: opacity 0.5s ease, transform 0.5s ease;
+            transition: opacity 0.5s ease, transform 0.5s ease, color 0.3s ease;
+            cursor: pointer;
         }
 
         .page-title.hidden {
@@ -104,21 +105,21 @@
         
         .buttons-container {
             display: flex;
-            gap: 25px;
+            gap: 20px;
             justify-content: center;
             align-items: center;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             margin-bottom: 20px;
         }
         
         .timer-button {
-            width: 160px;
-            height: 160px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
             border: none;
             background: #D2B48C;
             box-shadow: 0 10px 35px rgba(0,0,0,0.4);
-            font-size: 22px;
+            font-size: 20px;
             font-weight: bold;
             color: #5D4037;
             cursor: pointer;
@@ -127,8 +128,12 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             flex-shrink: 0;
+        }
+
+        .timer-button.debug {
+            background: linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%);
         }
         
         .timer-button:active {
@@ -506,13 +511,17 @@
             color: #999;
         }
 
-        @media (max-width: 400px) {
-            .timer-button {
-                width: 140px;
-                height: 140px;
-            }
+        @media (max-width: 480px) {
             .buttons-container {
                 gap: 15px;
+            }
+            .timer-button {
+                width: 120px;
+                height: 120px;
+                font-size: 18px;
+            }
+            .icon {
+                font-size: 48px;
             }
         }
     </style>
@@ -524,16 +533,22 @@
         <div id="endTimeMessage" class="end-time-message"></div>
         
         <div class="buttons-container">
-            <button class="timer-button" onclick="startTimer('chicken')">
+            <button class="timer-button chicken" onclick="startTimer('chicken')">
                 <div class="icon">🍗</div>
                 <div>עוף</div>
-                <div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">5 שעות</div>
+                <div id="chickenHoursDisplay" style="font-size: 14px; opacity: 0.9;">5 שעות</div>
             </button>
             
-            <button class="timer-button" onclick="startTimer('beef')">
+            <button class="timer-button beef" onclick="startTimer('beef')">
                 <div class="icon">🥩</div>
                 <div>בקר</div>
-                <div id="beefHoursDisplay" style="font-size: 16px; opacity: 0.9;">6 שעות</div>
+                <div id="beefHoursDisplay" style="font-size: 14px; opacity: 0.9;">6 שעות</div>
+            </button>
+
+            <button class="timer-button debug" onclick="startTimer('debug')" style="display: none;">
+                <div class="icon">⚡</div>
+                <div>Debug</div>
+                <div style="font-size: 14px; opacity: 0.9;">1 דק׳</div>
             </button>
         </div>
         
@@ -572,19 +587,6 @@
                         <div class="checkbox-label">
                             <span class="checkbox-icon">📳</span>
                             <span>רטט</span>
-                        </div>
-                        <div class="custom-checkbox"></div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="settings-section">
-                <div class="section-title">מצב Debug</div>
-                <div class="checkbox-options">
-                    <div class="checkbox-option" id="debugCheckbox" onclick="toggleNotification('debug')">
-                        <div class="checkbox-label">
-                            <span class="checkbox-icon">🐛</span>
-                            <span>1 דקה במקום שעות</span>
                         </div>
                         <div class="custom-checkbox"></div>
                     </div>
