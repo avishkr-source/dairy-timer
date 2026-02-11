@@ -103,7 +103,7 @@ function toggleNotification(type) {
 
 function adjustTime(type, delta) {
     const key = type + 'Hours';
-    settings[key] = Math.max(1, Math.min(6, settings[key] + delta));
+    settings[key] = Math.max(0.5, Math.min(6, settings[key] + delta));
     saveSettings();
     updateSettingsUI();
     
