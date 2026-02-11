@@ -27,6 +27,13 @@ function closeInstallPrompt() {
     document.getElementById('installPrompt').classList.remove('show');
 }
 
+// Request notification permission on first interaction
+async function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+    }
+}
+
 // Timer Logic
 let endTime = null;
 let timerInterval = null;
@@ -183,6 +190,9 @@ function startTimer(type) {
         }
     }
     
+    // Request notification permission when starting timer
+    requestNotificationPermission();
+    
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
@@ -262,6 +272,25 @@ function playBeep() {
     }
 }
 
+// Show notification - works even when app is in background!
+function showNotification() {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        const notification = new Notification('טיימר בשרי-חלבי', {
+            body: 'הסתיימה ההמתנה! אתה חלבי 🥳',
+            icon: './icon-192.png',
+            badge: './icon-192.png',
+            tag: 'timer-complete',
+            requireInteraction: true,
+            vibrate: [200, 100, 200, 100, 200, 100, 200]
+        });
+        
+        notification.onclick = () => {
+            window.focus();
+            notification.close();
+        };
+    }
+}
+
 function updateDisplay() {
     const now = new Date().getTime();
     const distance = endTime - now;
@@ -289,13 +318,17 @@ function updateDisplay() {
         
         resetButtons();
         
-        // Play notifications
+        // Show notification - works in background!
+        showNotification();
+        
+        // Play sound if enabled
         if (settings.sound) {
             playBeep();
             setTimeout(() => playBeep(), 300);
             setTimeout(() => playBeep(), 600);
         }
         
+        // Vibrate if enabled
         if (settings.vibrate && navigator.vibrate) {
             navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
         }
