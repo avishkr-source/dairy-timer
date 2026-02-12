@@ -259,6 +259,9 @@ function startTimer(type) {
         timeText = formatHours(hours);
     }
     
+    // Initialize audio on first interaction
+    initBeepAudio();
+    
     if (timerInterval && endTime) {
         const currentTypeHebrew = currentType === 'debug' ? 'Debug' : (currentType === 'chicken' ? 'עוף' : 'בקר');
         const confirmRestart = confirm(`טיימר ${currentTypeHebrew} כבר פועל. האם להפסיק ולהתחיל טיימר ${typeHebrew} חדש?`);
@@ -334,25 +337,46 @@ function startTimer(type) {
 }
 
 // Beep sound function
+let beepAudio = null;
+
+function initBeepAudio() {
+    if (!beepAudio) {
+        beepAudio = new Audio('./beep.wav');
+        beepAudio.volume = 0.5;
+        beepAudio.preload = 'auto';
+        // Try to load it immediately
+        beepAudio.load();
+    }
+    return beepAudio;
+}
+
 function playBeep() {
     try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        const audio = initBeepAudio();
+        audio.currentTime = 0;
         
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        // Create a new promise to handle play
+        const playPromise = audio.play();
         
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    console.log('Beep played successfully');
+                })
+                .catch(error => {
+                    console.log('Audio play failed:', error);
+                    // Try vibration as fallback
+                    if (navigator.vibrate) {
+                        navigator.vibrate(200);
+                    }
+                });
+        }
     } catch (e) {
-        console.log('Audio not supported');
+        console.log('Audio not supported:', e);
+        // Fallback to vibration
+        if (navigator.vibrate) {
+            navigator.vibrate(200);
+        }
     }
 }
 
@@ -388,6 +412,11 @@ function updateDisplay() {
             statusTimeout = null;
         }
         
+        console.log('⏰ Timer finished!');
+        console.log('Sound enabled:', settings.sound);
+        console.log('Vibrate enabled:', settings.vibrate);
+        console.log('Notification permission:', Notification.permission);
+        
         document.getElementById('timeDisplay').textContent = '00:00:00';
         document.getElementById('status').textContent = '';
         document.getElementById('status').classList.remove('fade-out');
@@ -403,18 +432,32 @@ function updateDisplay() {
         resetButtons();
         
         // Show notification - works in background!
+        console.log('📢 Showing notification...');
         showNotification();
         
-        // Play sound if enabled
+        // Play sound if enabled - play 3 times
         if (settings.sound) {
+            console.log('🔔 Playing sound...');
             playBeep();
-            setTimeout(() => playBeep(), 300);
-            setTimeout(() => playBeep(), 600);
+            setTimeout(() => playBeep(), 400);
+            setTimeout(() => playBeep(), 800);
+        } else {
+            console.log('🔇 Sound is disabled');
         }
         
-        // Vibrate if enabled
+        // Vibrate if enabled - strong pattern
         if (settings.vibrate && navigator.vibrate) {
-            navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
+            console.log('📳 Vibrating...');
+            // Vibrate immediately
+            navigator.vibrate([300, 100, 300, 100, 300]);
+            // Repeat after 1 second
+            setTimeout(() => {
+                if (navigator.vibrate) {
+                    navigator.vibrate([300, 100, 300]);
+                }
+            }, 1200);
+        } else {
+            console.log('Vibrate disabled or not supported');
         }
         
         localStorage.removeItem('timerEndTime');
