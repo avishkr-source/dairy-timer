@@ -27,10 +27,70 @@ function closeInstallPrompt() {
     document.getElementById('installPrompt').classList.remove('show');
 }
 
-// Request notification permission on first interaction
+// Request notification permission
 async function requestNotificationPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
         await Notification.requestPermission();
+    }
+}
+
+// Audio management
+let audioContext = null;
+let beepInterval = null;
+
+function getAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContext;
+}
+
+function playBeep(volume = 0.5) {
+    try {
+        const context = getAudioContext();
+        
+        if (context.state === 'suspended') {
+            context.resume();
+        }
+        
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        const now = context.currentTime;
+        gainNode.gain.setValueAtTime(volume, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        
+        oscillator.start(now);
+        oscillator.stop(now + 0.3);
+    } catch (e) {
+        console.error('Beep failed:', e);
+    }
+}
+
+function startContinuousBeep() {
+    stopContinuousBeep(); // Stop any existing beep
+    
+    const volume = settings.volume;
+    
+    // Play immediately
+    playBeep(volume);
+    
+    // Continue playing every 2 seconds
+    beepInterval = setInterval(() => {
+        playBeep(volume);
+    }, 2000);
+}
+
+function stopContinuousBeep() {
+    if (beepInterval) {
+        clearInterval(beepInterval);
+        beepInterval = null;
     }
 }
 
@@ -41,13 +101,14 @@ let currentType = null;
 let statusTimeout = null;
 let debugMode = false;
 
-// Debug mode activation
 let tapCount = 0;
 let tapTimer = null;
 
 let settings = {
     sound: false,
-    vibrate: false,
+    volume: 0.5,
+    separateTimes: false,
+    meatHours: 5,
     chickenHours: 5,
     beefHours: 6
 };
@@ -55,17 +116,18 @@ let settings = {
 function loadSettings() {
     const saved = localStorage.getItem('timerSettings');
     if (saved) {
-        settings = JSON.parse(saved);
+        try {
+            const loadedSettings = JSON.parse(saved);
+            settings = { ...settings, ...loadedSettings };
+        } catch (e) {
+            console.error('Failed to load settings:', e);
+        }
     }
     
-    // Load debug mode state
-    const savedDebug = localStorage.getItem('debugMode');
-    if (savedDebug === 'true') {
-        debugMode = true;
-        updateDebugUI();
-    }
-    
+    debugMode = localStorage.getItem('debugMode') === 'true';
+    updateDebugUI();
     updateSettingsUI();
+    updateButtonsForMode();
 }
 
 function saveSettings() {
@@ -79,20 +141,13 @@ function toggleDebugMode() {
     
     if (tapCount === 5) {
         debugMode = !debugMode;
-        localStorage.setItem('debugMode', debugMode.toString());
+        localStorage.setItem('debugMode', debugMode ? 'true' : 'false');
         updateDebugUI();
-        
-        if (navigator.vibrate) {
-            navigator.vibrate([100, 50, 100, 50, 100]);
-        }
-        
-        const msg = debugMode ? 'מצב Debug הופעל! ⚡\n\nכעת תראה כפתור צהוב שלישי עם טיימר של דקה אחת' : 'מצב Debug כבוי';
-        alert(msg);
+        playBeep(0.3);
+        alert(debugMode ? 'מצב Debug הופעל! ⚡' : 'מצב Debug כבוי');
         tapCount = 0;
     } else {
-        tapTimer = setTimeout(() => {
-            tapCount = 0;
-        }, 1000);
+        tapTimer = setTimeout(() => { tapCount = 0; }, 1000);
     }
 }
 
@@ -100,41 +155,93 @@ function updateDebugUI() {
     const debugBtn = document.querySelector('.timer-button.debug');
     const title = document.getElementById('pageTitle');
     
+    if (!debugBtn || !title) return;
+    
     if (debugMode) {
-        if (debugBtn) debugBtn.style.display = 'flex';
+        debugBtn.style.display = 'flex';
         title.style.color = '#ffeb3b';
         title.textContent = 'מה אכלת? ⚡';
     } else {
-        if (debugBtn) debugBtn.style.display = 'none';
+        debugBtn.style.display = 'none';
         title.style.color = 'white';
         title.textContent = 'מה אכלת?';
     }
 }
 
+function updateButtonsForMode() {
+    const chickenBtn = document.querySelector('.timer-button.chicken');
+    const beefBtn = document.querySelector('.timer-button.beef');
+    const meatBtn = document.querySelector('.timer-button.meat');
+    
+    if (settings.separateTimes) {
+        // Show separate buttons
+        if (chickenBtn) chickenBtn.style.display = 'flex';
+        if (beefBtn) beefBtn.style.display = 'flex';
+        if (meatBtn) meatBtn.style.display = 'none';
+    } else {
+        // Show combined button
+        if (chickenBtn) chickenBtn.style.display = 'none';
+        if (beefBtn) beefBtn.style.display = 'none';
+        if (meatBtn) meatBtn.style.display = 'flex';
+    }
+}
+
 function updateSettingsUI() {
     const soundCheckbox = document.getElementById('soundCheckbox');
-    const vibrateCheckbox = document.getElementById('vibrateCheckbox');
+    const separateCheckbox = document.getElementById('separateCheckbox');
+    const volumeControl = document.getElementById('volumeControl');
+    const volumeValue = document.getElementById('volumeValue');
+    const volumeSlider = document.getElementById('volumeSlider');
     
-    if (settings.sound) {
-        soundCheckbox.classList.add('checked');
-    } else {
-        soundCheckbox.classList.remove('checked');
+    if (soundCheckbox) {
+        soundCheckbox.classList.toggle('checked', settings.sound);
     }
     
-    if (settings.vibrate) {
-        vibrateCheckbox.classList.add('checked');
-    } else {
-        vibrateCheckbox.classList.remove('checked');
+    if (separateCheckbox) {
+        separateCheckbox.classList.toggle('checked', settings.separateTimes);
     }
     
-    document.getElementById('chickenTime').textContent = formatHours(settings.chickenHours);
-    document.getElementById('beefTime').textContent = formatHours(settings.beefHours);
+    if (volumeControl) {
+        volumeControl.style.display = settings.sound ? 'flex' : 'none';
+    }
     
+    if (volumeSlider) {
+        volumeSlider.value = settings.volume * 100;
+    }
+    
+    if (volumeValue) {
+        volumeValue.textContent = Math.round(settings.volume * 100) + '%';
+    }
+    
+    // Update time displays
+    const meatTime = document.getElementById('meatTime');
+    const chickenTime = document.getElementById('chickenTime');
+    const beefTime = document.getElementById('beefTime');
+    
+    if (meatTime) meatTime.textContent = formatHours(settings.meatHours);
+    if (chickenTime) chickenTime.textContent = formatHours(settings.chickenHours);
+    if (beefTime) beefTime.textContent = formatHours(settings.beefHours);
+    
+    // Update button displays
+    const meatDisplay = document.getElementById('meatHoursDisplay');
     const chickenDisplay = document.getElementById('chickenHoursDisplay');
     const beefDisplay = document.getElementById('beefHoursDisplay');
     
+    if (meatDisplay) meatDisplay.textContent = formatHours(settings.meatHours);
     if (chickenDisplay) chickenDisplay.textContent = formatHours(settings.chickenHours);
     if (beefDisplay) beefDisplay.textContent = formatHours(settings.beefHours);
+    
+    // Show/hide time selectors
+    const meatSelector = document.getElementById('meatTimeSelector');
+    const separateSelectors = document.getElementById('separateTimeSelectors');
+    
+    if (settings.separateTimes) {
+        if (meatSelector) meatSelector.style.display = 'none';
+        if (separateSelectors) separateSelectors.style.display = 'block';
+    } else {
+        if (meatSelector) meatSelector.style.display = 'flex';
+        if (separateSelectors) separateSelectors.style.display = 'none';
+    }
 }
 
 function formatHours(hours) {
@@ -147,13 +254,25 @@ function formatHours(hours) {
 }
 
 function toggleNotification(type) {
-    settings[type] = !settings[type];
+    if (type === 'separateTimes') {
+        settings.separateTimes = !settings.separateTimes;
+        updateButtonsForMode();
+    } else {
+        settings[type] = !settings[type];
+    }
+    
     saveSettings();
     updateSettingsUI();
     
-    if (navigator.vibrate && type === 'vibrate' && settings[type]) {
-        navigator.vibrate(100);
+    if (type === 'sound' && settings[type]) {
+        playBeep(settings.volume);
     }
+}
+
+function adjustVolume(value) {
+    settings.volume = value / 100;
+    saveSettings();
+    updateSettingsUI();
 }
 
 function adjustTime(type, delta) {
@@ -161,10 +280,6 @@ function adjustTime(type, delta) {
     settings[key] = Math.max(1, Math.min(6, settings[key] + delta));
     saveSettings();
     updateSettingsUI();
-    
-    if (navigator.vibrate) {
-        navigator.vibrate(50);
-    }
 }
 
 function openNotificationSettings() {
@@ -176,19 +291,28 @@ function closeNotificationSettings() {
 }
 
 function updateEndTimeMessage() {
+    const endTimeMsg = document.getElementById('endTimeMessage');
+    const currentStatusMsg = document.getElementById('currentStatusMsg');
+    
+    if (!endTimeMsg) return;
+    
     if (endTime) {
         const endDate = new Date(endTime);
         const hours = endDate.getHours();
         const minutes = endDate.getMinutes();
         const timeString = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
-        document.getElementById('endTimeMessage').textContent = `אתה תהיה חלבי בשעה ${timeString}`;
+        endTimeMsg.textContent = `אתה תהיה חלבי בשעה ${timeString}`;
+        if (currentStatusMsg) currentStatusMsg.textContent = 'אתה בשרי';
     } else {
-        document.getElementById('endTimeMessage').textContent = '';
+        endTimeMsg.textContent = '';
+        if (currentStatusMsg) currentStatusMsg.textContent = '';
     }
 }
 
 function cancelTimer() {
     if (confirm('האם אתה בטוח שברצונך לבטל את הטיימר?')) {
+        stopContinuousBeep();
+        
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
@@ -209,6 +333,7 @@ function cancelTimer() {
         document.getElementById('completionMessage').textContent = '';
         document.getElementById('completionMessage').classList.remove('show');
         document.getElementById('cancelBtn').style.display = 'none';
+        document.getElementById('stopBeepBtn').style.display = 'none';
         updateEndTimeMessage();
         
         document.getElementById('pageTitle').classList.remove('hidden');
@@ -221,15 +346,23 @@ function cancelTimer() {
     }
 }
 
+function stopBeeping() {
+    stopContinuousBeep();
+    document.getElementById('stopBeepBtn').style.display = 'none';
+}
+
 function resetButtons() {
     const buttons = document.querySelectorAll('.timer-button');
-    buttons.forEach(btn => {
-        btn.classList.remove('active');
-    });
+    buttons.forEach(btn => btn.classList.remove('active'));
     
+    const meatBtn = document.querySelector('.timer-button.meat');
     const chickenBtn = document.querySelector('.timer-button.chicken');
     const beefBtn = document.querySelector('.timer-button.beef');
     const debugBtn = document.querySelector('.timer-button.debug');
+    
+    if (meatBtn) {
+        meatBtn.innerHTML = `<div class="icon">🍗🥩</div><div>בשר</div><div id="meatHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.meatHours)}</div>`;
+    }
     
     if (chickenBtn) {
         chickenBtn.innerHTML = `<div class="icon">🍗</div><div>עוף</div><div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.chickenHours)}</div>`;
@@ -245,67 +378,73 @@ function resetButtons() {
 }
 
 function startTimer(type) {
-    let hours;
-    let typeHebrew;
-    let timeText;
+    let hours, typeHebrew, timeText;
     
     if (type === 'debug') {
-        hours = 1 / 60; // 1 minute in hours
+        hours = 1 / 60;
         typeHebrew = 'Debug';
         timeText = '1 דק׳';
+    } else if (type === 'meat') {
+        hours = settings.meatHours;
+        typeHebrew = 'בשר';
+        timeText = formatHours(hours);
+    } else if (type === 'chicken') {
+        hours = settings.chickenHours;
+        typeHebrew = 'עוף';
+        timeText = formatHours(hours);
     } else {
-        hours = type === 'chicken' ? settings.chickenHours : settings.beefHours;
-        typeHebrew = type === 'chicken' ? 'עוף' : 'בקר';
+        hours = settings.beefHours;
+        typeHebrew = 'בקר';
         timeText = formatHours(hours);
     }
     
-    // Initialize audio on first interaction
-    initBeepAudio();
+    getAudioContext();
     
     if (timerInterval && endTime) {
-        const currentTypeHebrew = currentType === 'debug' ? 'Debug' : (currentType === 'chicken' ? 'עוף' : 'בקר');
+        const currentTypeHebrew = currentType === 'debug' ? 'Debug' : 
+                                 currentType === 'meat' ? 'בשר' :
+                                 currentType === 'chicken' ? 'עוף' : 'בקר';
         const confirmRestart = confirm(`טיימר ${currentTypeHebrew} כבר פועל. האם להפסיק ולהתחיל טיימר ${typeHebrew} חדש?`);
-        if (!confirmRestart) {
-            return;
-        }
+        if (!confirmRestart) return;
     }
     
-    // Request notification permission when starting timer
     requestNotificationPermission();
     
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
     }
-
+    
     if (statusTimeout) {
         clearTimeout(statusTimeout);
         statusTimeout = null;
     }
-
+    
+    stopContinuousBeep();
+    
     currentType = type;
     endTime = new Date().getTime() + (hours * 60 * 60 * 1000);
     
     document.getElementById('pageTitle').classList.add('hidden');
     document.body.classList.add('timer-active');
-    
     document.getElementById('cancelBtn').style.display = 'inline-block';
     document.getElementById('completionMessage').textContent = '';
     document.getElementById('completionMessage').classList.remove('show');
+    document.getElementById('stopBeepBtn').style.display = 'none';
     
     resetButtons();
     
-    const buttons = document.querySelectorAll('.timer-button');
     let activeBtn;
-    
     if (type === 'debug') {
         activeBtn = document.querySelector('.timer-button.debug');
+    } else if (type === 'meat') {
+        activeBtn = document.querySelector('.timer-button.meat');
     } else if (type === 'chicken') {
-        activeBtn = buttons[0];
+        activeBtn = document.querySelector('.timer-button.chicken');
     } else {
-        activeBtn = buttons[1];
+        activeBtn = document.querySelector('.timer-button.beef');
     }
-        
+    
     if (activeBtn) {
         activeBtn.classList.add('active');
         activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 16px; opacity: 0.9;">פועל...</div>`;
@@ -328,68 +467,18 @@ function startTimer(type) {
     updateDisplay();
     timerInterval = setInterval(updateDisplay, 1000);
     
-    if (navigator.vibrate) {
-        navigator.vibrate(200);
-    }
-
     localStorage.setItem('timerEndTime', endTime);
     localStorage.setItem('timerType', type);
 }
 
-// Beep sound function
-let beepAudio = null;
-
-function initBeepAudio() {
-    if (!beepAudio) {
-        beepAudio = new Audio('./beep.wav');
-        beepAudio.volume = 0.5;
-        beepAudio.preload = 'auto';
-        // Try to load it immediately
-        beepAudio.load();
-    }
-    return beepAudio;
-}
-
-function playBeep() {
-    try {
-        const audio = initBeepAudio();
-        audio.currentTime = 0;
-        
-        // Create a new promise to handle play
-        const playPromise = audio.play();
-        
-        if (playPromise !== undefined) {
-            playPromise
-                .then(() => {
-                    console.log('Beep played successfully');
-                })
-                .catch(error => {
-                    console.log('Audio play failed:', error);
-                    // Try vibration as fallback
-                    if (navigator.vibrate) {
-                        navigator.vibrate(200);
-                    }
-                });
-        }
-    } catch (e) {
-        console.log('Audio not supported:', e);
-        // Fallback to vibration
-        if (navigator.vibrate) {
-            navigator.vibrate(200);
-        }
-    }
-}
-
-// Show notification - works even when app is in background!
-function showNotification() {
+function showNotification(timeRemaining) {
     if ('Notification' in window && Notification.permission === 'granted') {
         const notification = new Notification('טיימר בשרי-חלבי', {
             body: 'הסתיימה ההמתנה! אתה חלבי 🥳',
             icon: './icon-192.png',
             badge: './icon-192.png',
             tag: 'timer-complete',
-            requireInteraction: true,
-            vibrate: [200, 100, 200, 100, 200, 100, 200]
+            requireInteraction: true
         });
         
         notification.onclick = () => {
@@ -399,10 +488,39 @@ function showNotification() {
     }
 }
 
+// Update notification in background
+function updateBackgroundNotification() {
+    if ('Notification' in window && Notification.permission === 'granted' && endTime) {
+        const now = new Date().getTime();
+        const distance = endTime - now;
+        
+        if (distance > 0) {
+            const hours = Math.floor(distance / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            const timeString = String(hours).padStart(2, '0') + ':' +
+                              String(minutes).padStart(2, '0') + ':' +
+                              String(seconds).padStart(2, '0');
+            
+            // This creates a persistent notification that updates
+            const notification = new Notification('טיימר בשרי-חלבי פעיל', {
+                body: `⏰ זמן נותר: ${timeString}`,
+                icon: './icon-192.png',
+                tag: 'timer-running',
+                silent: true,
+                requireInteraction: false
+            });
+            
+            setTimeout(() => notification.close(), 5000);
+        }
+    }
+}
+
 function updateDisplay() {
     const now = new Date().getTime();
     const distance = endTime - now;
-
+    
     if (distance < 0) {
         clearInterval(timerInterval);
         timerInterval = null;
@@ -412,11 +530,6 @@ function updateDisplay() {
             statusTimeout = null;
         }
         
-        console.log('⏰ Timer finished!');
-        console.log('Sound enabled:', settings.sound);
-        console.log('Vibrate enabled:', settings.vibrate);
-        console.log('Notification permission:', Notification.permission);
-        
         document.getElementById('timeDisplay').textContent = '00:00:00';
         document.getElementById('status').textContent = '';
         document.getElementById('status').classList.remove('fade-out');
@@ -424,63 +537,41 @@ function updateDisplay() {
         document.getElementById('permanentStatus').classList.remove('show');
         
         const completionMsg = document.getElementById('completionMessage');
-        completionMsg.textContent = 'הסתיימה ההמתנה! אתה חלבי 🥳';
+        completionMsg.innerHTML = '🎉🎉🎉<br>הסתיימה ההמתנה!<br>אתה חלבי 🥳<br>🎉🎉🎉';
         completionMsg.classList.add('show');
         
         document.getElementById('endTimeMessage').textContent = '';
+        document.getElementById('currentStatusMsg').textContent = '';
         
         resetButtons();
         
-        // Show notification - works in background!
-        console.log('📢 Showing notification...');
         showNotification();
         
-        // Play sound if enabled - play 3 times
         if (settings.sound) {
-            console.log('🔔 Playing sound...');
-            playBeep();
-            setTimeout(() => playBeep(), 400);
-            setTimeout(() => playBeep(), 800);
-        } else {
-            console.log('🔇 Sound is disabled');
-        }
-        
-        // Vibrate if enabled - strong pattern
-        if (settings.vibrate && navigator.vibrate) {
-            console.log('📳 Vibrating...');
-            // Vibrate immediately
-            navigator.vibrate([300, 100, 300, 100, 300]);
-            // Repeat after 1 second
-            setTimeout(() => {
-                if (navigator.vibrate) {
-                    navigator.vibrate([300, 100, 300]);
-                }
-            }, 1200);
-        } else {
-            console.log('Vibrate disabled or not supported');
+            startContinuousBeep();
+            document.getElementById('stopBeepBtn').style.display = 'inline-block';
         }
         
         localStorage.removeItem('timerEndTime');
         localStorage.removeItem('timerType');
         return;
     }
-
+    
     const hours = Math.floor(distance / (1000 * 60 * 60));
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
+    
     const display = 
         String(hours).padStart(2, '0') + ':' +
         String(minutes).padStart(2, '0') + ':' +
         String(seconds).padStart(2, '0');
-
+    
     document.getElementById('timeDisplay').textContent = display;
 }
 
 window.onload = function() {
     loadSettings();
     
-    // Add debug mode trigger to title
     const title = document.getElementById('pageTitle');
     if (title) {
         title.addEventListener('click', toggleDebugMode);
@@ -498,34 +589,40 @@ window.onload = function() {
         if (endTime > now) {
             document.getElementById('pageTitle').classList.add('hidden');
             document.body.classList.add('timer-active');
-            
             document.getElementById('cancelBtn').style.display = 'inline-block';
             
-            const buttons = document.querySelectorAll('.timer-button');
             let activeBtn;
-            
             if (savedType === 'debug') {
                 activeBtn = document.querySelector('.timer-button.debug');
+            } else if (savedType === 'meat') {
+                activeBtn = document.querySelector('.timer-button.meat');
             } else if (savedType === 'chicken') {
-                activeBtn = buttons[0];
+                activeBtn = document.querySelector('.timer-button.chicken');
             } else {
-                activeBtn = buttons[1];
+                activeBtn = document.querySelector('.timer-button.beef');
             }
             
             if (activeBtn) {
                 activeBtn.classList.add('active');
-                const typeHebrew = savedType === 'debug' ? 'Debug' : (savedType === 'chicken' ? 'עוף' : 'בקר');
+                const typeHebrew = savedType === 'debug' ? 'Debug' :
+                                 savedType === 'meat' ? 'בשר' :
+                                 savedType === 'chicken' ? 'עוף' : 'בקר';
                 activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 16px; opacity: 0.9;">פועל...</div>`;
             }
             
-            const typeHebrew = savedType === 'debug' ? 'Debug' : (savedType === 'chicken' ? 'עוף' : 'בקר');
+            const typeHebrew = savedType === 'debug' ? 'Debug' :
+                             savedType === 'meat' ? 'בשר' :
+                             savedType === 'chicken' ? 'עוף' : 'בקר';
             let timeText;
             
             if (savedType === 'debug') {
                 timeText = '1 דק׳';
+            } else if (savedType === 'meat') {
+                timeText = formatHours(settings.meatHours);
+            } else if (savedType === 'chicken') {
+                timeText = formatHours(settings.chickenHours);
             } else {
-                const hours = savedType === 'chicken' ? settings.chickenHours : settings.beefHours;
-                timeText = formatHours(hours);
+                timeText = formatHours(settings.beefHours);
             }
             
             document.getElementById('permanentStatus').textContent = `טיימר ${typeHebrew} של ${timeText} פעיל`;
