@@ -102,14 +102,25 @@ function startContinuousBeep() {
     stopContinuousBeep();
     
     const volume = settings.volume;
-    console.log('🔊 Starting continuous NBA buzzer with volume:', volume);
+    console.log('🔊 Starting continuous NBA buzzer (8 times) with volume:', volume);
+    
+    let beepCount = 0;
+    const maxBeeps = 8;
     
     // Play immediately
     playBeep(volume);
+    beepCount++;
     
-    // Continue playing every 3 seconds (buzzer is ~0.85s, so give it time)
+    // Continue playing every 3 seconds, up to 8 times
     beepInterval = setInterval(() => {
-        playBeep(volume);
+        if (beepCount < maxBeeps) {
+            playBeep(volume);
+            beepCount++;
+            console.log(`🔔 Beep ${beepCount}/${maxBeeps}`);
+        } else {
+            console.log('✅ Finished 8 beeps, stopping');
+            stopContinuousBeep();
+        }
     }, 3000);
 }
 
@@ -351,7 +362,7 @@ function updateEndTimeMessage() {
         const minutes = endDate.getMinutes();
         const timeString = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
         endTimeMsg.textContent = `אתה תהיה חלבי בשעה ${timeString}`;
-        if (currentStatusMsg) currentStatusMsg.textContent = 'אתה בשרי';
+        if (currentStatusMsg) currentStatusMsg.textContent = '🥩 אתה בשרי 🍗';
     } else {
         endTimeMsg.textContent = '';
         if (currentStatusMsg) currentStatusMsg.textContent = '';
@@ -621,7 +632,7 @@ function updateDisplay() {
         document.getElementById('endTimeMessage').textContent = '';
         
         const currentStatusMsg = document.getElementById('currentStatusMsg');
-        currentStatusMsg.textContent = 'אתה חלבי';
+        currentStatusMsg.textContent = '🎉 אתה חלבי ☕';
         currentStatusMsg.classList.add('dairy');
         
         resetButtons();
