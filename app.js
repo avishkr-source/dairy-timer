@@ -60,7 +60,7 @@ function playBeep(volume = 0.5) {
         gainNode.connect(context.destination);
         
         oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
+        oscillator.type = 'square'; // Square wave is MUCH louder than sine!
         
         const now = context.currentTime;
         gainNode.gain.setValueAtTime(volume, now);
@@ -68,8 +68,10 @@ function playBeep(volume = 0.5) {
         
         oscillator.start(now);
         oscillator.stop(now + 0.3);
+        
+        console.log('✅ Beep played with volume:', volume);
     } catch (e) {
-        console.error('Beep failed:', e);
+        console.error('❌ Beep failed:', e);
     }
 }
 
