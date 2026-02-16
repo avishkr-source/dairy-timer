@@ -60,6 +60,29 @@
             z-index: 1;
             padding-bottom: 80px;
         }
+        .settings-icon-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: #8B5A2B;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .settings-icon-btn:active {
+            transform: scale(0.9);
+            background: rgba(255, 255, 255, 1);
+        }
         .page-title {
             font-size: 32px;
             font-weight: bold;
@@ -73,10 +96,13 @@
         .current-status-msg {
             font-size: 28px;
             font-weight: bold;
-            color: #4ade80;
+            color: #ef4444;
             margin-bottom: 10px;
             text-shadow: 0 3px 15px rgba(0,0,0,0.7);
             min-height: 35px;
+        }
+        .current-status-msg.dairy {
+            color: #3b82f6;
         }
         .end-time-message {
             font-size: 24px;
@@ -112,7 +138,12 @@
             align-items: center;
             gap: 6px;
         }
-        .timer-button.debug { background: linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%); }
+        .timer-button.debug { 
+            background: linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%);
+            width: 120px;
+            height: 120px;
+            font-size: 18px;
+        }
         .timer-button:active { transform: scale(0.95); }
         .timer-button.active {
             background: #4ade80;
@@ -343,6 +374,10 @@
 </head>
 <body>
     <div class="container">
+        <button class="settings-icon-btn" onclick="openNotificationSettings()" title="הגדרות">
+            ⚙️
+        </button>
+        
         <div id="pageTitle" class="page-title">מה אכלת?</div>
         <div id="currentStatusMsg" class="current-status-msg"></div>
         <div id="endTimeMessage" class="end-time-message"></div>
@@ -384,9 +419,6 @@
             </button>
             <button id="stopBeepBtn" class="control-btn stop-beep-btn" onclick="stopBeeping()" style="display: none;">
                 🔇 הפסק צפצוף
-            </button>
-            <button class="control-btn notification-btn" onclick="openNotificationSettings()">
-                ⚙️ הגדרות
             </button>
         </div>
     </div>

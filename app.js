@@ -328,6 +328,10 @@ function cancelTimer() {
         endTime = null;
         currentType = null;
         
+        const currentStatusMsg = document.getElementById('currentStatusMsg');
+        currentStatusMsg.textContent = '';
+        currentStatusMsg.classList.remove('dairy');
+        
         document.getElementById('timeDisplay').textContent = '';
         document.getElementById('status').textContent = '';
         document.getElementById('permanentStatus').textContent = '';
@@ -426,6 +430,9 @@ function startTimer(type) {
     
     currentType = type;
     endTime = new Date().getTime() + (hours * 60 * 60 * 1000);
+    
+    const currentStatusMsg = document.getElementById('currentStatusMsg');
+    currentStatusMsg.classList.remove('dairy');
     
     document.getElementById('pageTitle').classList.add('hidden');
     document.body.classList.add('timer-active');
@@ -532,6 +539,11 @@ function updateDisplay() {
             statusTimeout = null;
         }
         
+        console.log('⏰ Timer finished!');
+        console.log('Current type:', currentType);
+        console.log('Sound enabled:', settings.sound);
+        console.log('Volume:', settings.volume);
+        
         document.getElementById('timeDisplay').textContent = '00:00:00';
         document.getElementById('status').textContent = '';
         document.getElementById('status').classList.remove('fade-out');
@@ -543,15 +555,21 @@ function updateDisplay() {
         completionMsg.classList.add('show');
         
         document.getElementById('endTimeMessage').textContent = '';
-        document.getElementById('currentStatusMsg').textContent = '';
+        
+        const currentStatusMsg = document.getElementById('currentStatusMsg');
+        currentStatusMsg.textContent = 'אתה חלבי';
+        currentStatusMsg.classList.add('dairy');
         
         resetButtons();
         
         showNotification();
         
         if (settings.sound) {
+            console.log('🔊 Starting continuous beep...');
             startContinuousBeep();
             document.getElementById('stopBeepBtn').style.display = 'inline-block';
+        } else {
+            console.log('🔇 Sound is disabled in settings');
         }
         
         localStorage.removeItem('timerEndTime');

@@ -1,4 +1,3 @@
-
 const CACHE_NAME = 'meat-dairy-timer-v2';
 
 const urlsToCache = [
