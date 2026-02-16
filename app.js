@@ -51,7 +51,7 @@ function initAudio() {
 
 function playBeep(volume = 1.0) {
     try {
-        console.log('🔊 Playing NBA buzzer with volume:', volume);
+        console.log('🔊 playBeep called with volume:', volume);
         
         initAudio();
         
@@ -60,24 +60,41 @@ function playBeep(volume = 1.0) {
             return;
         }
         
+        console.log('📊 Audio element state:', {
+            paused: buzzerAudio.paused,
+            readyState: buzzerAudio.readyState,
+            currentTime: buzzerAudio.currentTime,
+            duration: buzzerAudio.duration,
+            src: buzzerAudio.src
+        });
+        
         buzzerAudio.volume = volume;
         buzzerAudio.currentTime = 0;
         
+        console.log('▶️ Calling play()...');
         const playPromise = buzzerAudio.play();
         
         if (playPromise !== undefined) {
             playPromise
                 .then(() => {
-                    console.log('✅ NBA Buzzer played!');
+                    console.log('✅ NBA Buzzer played successfully!');
                 })
                 .catch(error => {
                     console.error('❌ Play failed:', error);
                     console.error('Error name:', error.name);
                     console.error('Error message:', error.message);
+                    
+                    // Try to resume audio context if suspended
+                    if (error.name === 'NotAllowedError') {
+                        console.log('⚠️ NotAllowedError - user interaction may be required');
+                    }
                 });
+        } else {
+            console.log('⚠️ play() returned undefined');
         }
     } catch (e) {
-        console.error('❌ Beep failed:', e);
+        console.error('❌ Beep exception:', e);
+        console.error('Exception stack:', e.stack);
     }
 }
 
@@ -529,18 +546,48 @@ function startTimer(type) {
 
 function showNotification() {
     if ('Notification' in window && Notification.permission === 'granted') {
-        const notification = new Notification('טיימר בשרי-חלבי', {
-            body: 'הסתיימה ההמתנה! אתה חלבי 🥳',
-            icon: './icon-192.png',
-            badge: './icon-192.png',
-            tag: 'timer-complete',
-            requireInteraction: true
-        });
+        console.log('📢 Showing notification...');
         
-        notification.onclick = () => {
-            window.focus();
-            notification.close();
-        };
+        // Check if we have service worker
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            // Use Service Worker notification for PWA
+            navigator.serviceWorker.ready.then(function(registration) {
+                registration.showNotification('טיימר בשרי-חלבי', {
+                    body: 'הסתיימה ההמתנה! אתה חלבי 🥳',
+                    icon: './icon-192.png',
+                    badge: './icon-192.png',
+                    tag: 'timer-complete',
+                    requireInteraction: true,
+                    vibrate: [200, 100, 200, 100, 200]
+                }).then(() => {
+                    console.log('✅ Notification shown via Service Worker');
+                }).catch(error => {
+                    console.error('❌ Notification failed:', error);
+                });
+            });
+        } else {
+            // Fallback for browser (not PWA)
+            try {
+                const notification = new Notification('טיימר בשרי-חלבי', {
+                    body: 'הסתיימה ההמתנה! אתה חלבי 🥳',
+                    icon: './icon-192.png',
+                    badge: './icon-192.png',
+                    tag: 'timer-complete',
+                    requireInteraction: true
+                });
+                
+                notification.onclick = () => {
+                    window.focus();
+                    notification.close();
+                };
+                
+                console.log('✅ Notification shown via constructor');
+            } catch (e) {
+                console.error('❌ Notification constructor failed:', e);
+            }
+        }
+    } else {
+        console.log('⚠️ Notifications not permitted or not available');
     }
 }
 
