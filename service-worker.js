@@ -1,11 +1,14 @@
-const CACHE_NAME = 'meat-dairy-timer-v2';
+const CACHE_NAME = 'meat-dairy-timer-v3';
 
 const urlsToCache = [
   './',
   './index.html',
+  './app.js',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './nba-buzzer.wav',
+  './simple-beep.wav'
 ];
 
 self.addEventListener('install', event => {
