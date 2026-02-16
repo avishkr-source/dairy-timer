@@ -32,43 +32,38 @@ async function requestNotificationPermission() {
     }
 }
 
-// Audio - SIMPLE AND WORKING
-let audioContext = null;
+// Audio - USING REAL AUDIO FILES (works in installed PWA!)
+let buzzerAudio = null;
 let beepInterval = null;
 
-function getAudioContext() {
-    if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('✅ AudioContext created');
+function initAudio() {
+    if (!buzzerAudio) {
+        buzzerAudio = new Audio('./nba-buzzer.wav');
+        buzzerAudio.volume = 1.0;
+        buzzerAudio.load();
+        console.log('✅ NBA Buzzer audio loaded');
     }
-    return audioContext;
 }
 
 function playBeep(volume = 1.0) {
     try {
-        const context = getAudioContext();
+        console.log('🔊 Playing NBA buzzer with volume:', volume);
         
-        if (context.state === 'suspended') {
-            context.resume();
+        initAudio();
+        buzzerAudio.volume = volume;
+        buzzerAudio.currentTime = 0;
+        
+        const playPromise = buzzerAudio.play();
+        
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => {
+                    console.log('✅ NBA Buzzer played!');
+                })
+                .catch(error => {
+                    console.error('❌ Play failed:', error);
+                });
         }
-        
-        const oscillator = context.createOscillator();
-        const gainNode = context.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(context.destination);
-        
-        oscillator.frequency.value = 800;
-        oscillator.type = 'square'; // SQUARE = LOUD!
-        
-        const now = context.currentTime;
-        gainNode.gain.setValueAtTime(volume, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-        
-        oscillator.start(now);
-        oscillator.stop(now + 0.3);
-        
-        console.log('✅ BEEP played with volume:', volume);
     } catch (e) {
         console.error('❌ Beep failed:', e);
     }
@@ -78,12 +73,15 @@ function startContinuousBeep() {
     stopContinuousBeep();
     
     const volume = settings.volume;
-    console.log('🔊 Starting continuous beep with volume:', volume);
+    console.log('🔊 Starting continuous NBA buzzer with volume:', volume);
     
+    // Play immediately
     playBeep(volume);
+    
+    // Continue playing every 3 seconds (buzzer is ~0.85s, so give it time)
     beepInterval = setInterval(() => {
         playBeep(volume);
-    }, 2000);
+    }, 3000);
 }
 
 function stopContinuousBeep() {
@@ -91,6 +89,12 @@ function stopContinuousBeep() {
         clearInterval(beepInterval);
         beepInterval = null;
         console.log('🔇 Stopped continuous beep');
+    }
+    
+    // Stop any playing audio
+    if (buzzerAudio && !buzzerAudio.paused) {
+        buzzerAudio.pause();
+        buzzerAudio.currentTime = 0;
     }
 }
 
@@ -146,7 +150,7 @@ function toggleDebugMode() {
         updateButtonsForMode();
         
         // Play feedback
-        getAudioContext();
+        initAudio();
         playBeep(0.3);
         
         alert(debugMode ? 'מצב Debug הופעל! ⚡\n\nכפתור העוף הופך ל-10 שניות' : 'מצב Debug כבוי');
@@ -279,7 +283,7 @@ function toggleNotification(type) {
     updateSettingsUI();
     
     if (type === 'sound' && settings[type]) {
-        getAudioContext();
+        initAudio();
         playBeep(settings.volume);
     }
 }
@@ -440,7 +444,7 @@ function startTimer(type) {
     }
     
     // Initialize audio on user interaction
-    getAudioContext();
+    initAudio();
     
     if (timerInterval && endTime) {
         const confirmRestart = confirm(`טיימר כבר פועל. האם להתחיל טיימר ${typeHebrew} חדש?`);
