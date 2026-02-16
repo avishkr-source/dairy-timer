@@ -7,7 +7,6 @@ if ('serviceWorker' in navigator) {
 
 // PWA Install Prompt
 let deferredPrompt;
-
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
@@ -27,25 +26,25 @@ function closeInstallPrompt() {
     document.getElementById('installPrompt').classList.remove('show');
 }
 
-// Request notification permission
 async function requestNotificationPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
         await Notification.requestPermission();
     }
 }
 
-// Audio management
+// Audio - SIMPLE AND WORKING
 let audioContext = null;
 let beepInterval = null;
 
 function getAudioContext() {
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('✅ AudioContext created');
     }
     return audioContext;
 }
 
-function playBeep(volume = 0.5) {
+function playBeep(volume = 1.0) {
     try {
         const context = getAudioContext();
         
@@ -60,7 +59,7 @@ function playBeep(volume = 0.5) {
         gainNode.connect(context.destination);
         
         oscillator.frequency.value = 800;
-        oscillator.type = 'square'; // Square wave is MUCH louder than sine!
+        oscillator.type = 'square'; // SQUARE = LOUD!
         
         const now = context.currentTime;
         gainNode.gain.setValueAtTime(volume, now);
@@ -69,21 +68,19 @@ function playBeep(volume = 0.5) {
         oscillator.start(now);
         oscillator.stop(now + 0.3);
         
-        console.log('✅ Beep played with volume:', volume);
+        console.log('✅ BEEP played with volume:', volume);
     } catch (e) {
         console.error('❌ Beep failed:', e);
     }
 }
 
 function startContinuousBeep() {
-    stopContinuousBeep(); // Stop any existing beep
+    stopContinuousBeep();
     
     const volume = settings.volume;
+    console.log('🔊 Starting continuous beep with volume:', volume);
     
-    // Play immediately
     playBeep(volume);
-    
-    // Continue playing every 2 seconds
     beepInterval = setInterval(() => {
         playBeep(volume);
     }, 2000);
@@ -93,6 +90,7 @@ function stopContinuousBeep() {
     if (beepInterval) {
         clearInterval(beepInterval);
         beepInterval = null;
+        console.log('🔇 Stopped continuous beep');
     }
 }
 
@@ -108,7 +106,7 @@ let tapTimer = null;
 
 let settings = {
     sound: false,
-    volume: 0.5,
+    volume: 1.0,
     separateTimes: false,
     meatHours: 5,
     chickenHours: 5,
@@ -145,8 +143,13 @@ function toggleDebugMode() {
         debugMode = !debugMode;
         localStorage.setItem('debugMode', debugMode ? 'true' : 'false');
         updateDebugUI();
+        updateButtonsForMode();
+        
+        // Play feedback
+        getAudioContext();
         playBeep(0.3);
-        alert(debugMode ? 'מצב Debug הופעל! ⚡' : 'מצב Debug כבוי');
+        
+        alert(debugMode ? 'מצב Debug הופעל! ⚡\n\nכפתור העוף הופך ל-10 שניות' : 'מצב Debug כבוי');
         tapCount = 0;
     } else {
         tapTimer = setTimeout(() => { tapCount = 0; }, 1000);
@@ -154,17 +157,13 @@ function toggleDebugMode() {
 }
 
 function updateDebugUI() {
-    const debugBtn = document.querySelector('.timer-button.debug');
     const title = document.getElementById('pageTitle');
-    
-    if (!debugBtn || !title) return;
+    if (!title) return;
     
     if (debugMode) {
-        debugBtn.style.display = 'flex';
         title.style.color = '#ffeb3b';
         title.textContent = 'מה אכלת? ⚡';
     } else {
-        debugBtn.style.display = 'none';
         title.style.color = 'white';
         title.textContent = 'מה אכלת?';
     }
@@ -176,15 +175,31 @@ function updateButtonsForMode() {
     const meatBtn = document.querySelector('.timer-button.meat');
     
     if (settings.separateTimes) {
-        // Show separate buttons
         if (chickenBtn) chickenBtn.style.display = 'flex';
         if (beefBtn) beefBtn.style.display = 'flex';
         if (meatBtn) meatBtn.style.display = 'none';
     } else {
-        // Show combined button
         if (chickenBtn) chickenBtn.style.display = 'none';
         if (beefBtn) beefBtn.style.display = 'none';
         if (meatBtn) meatBtn.style.display = 'flex';
+    }
+    
+    // Update chicken button for debug mode
+    if (chickenBtn && debugMode && settings.separateTimes) {
+        chickenBtn.innerHTML = `<div class="icon">⚡</div><div>Debug</div><div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">10 שניות</div>`;
+        chickenBtn.style.background = 'linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%)';
+    } else if (chickenBtn && settings.separateTimes) {
+        chickenBtn.innerHTML = `<div class="icon">🍗</div><div>עוף</div><div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.chickenHours)}</div>`;
+        chickenBtn.style.background = '#D2B48C';
+    }
+    
+    // Update meat button for debug mode
+    if (meatBtn && debugMode && !settings.separateTimes) {
+        meatBtn.innerHTML = `<div class="icon">⚡</div><div>Debug</div><div id="meatHoursDisplay" style="font-size: 16px; opacity: 0.9;">10 שניות</div>`;
+        meatBtn.style.background = 'linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%)';
+    } else if (meatBtn && !settings.separateTimes) {
+        meatBtn.innerHTML = `<div class="icon">🍗🥩</div><div>בשר</div><div id="meatHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.meatHours)}</div>`;
+        meatBtn.style.background = '#D2B48C';
     }
 }
 
@@ -215,7 +230,6 @@ function updateSettingsUI() {
         volumeValue.textContent = Math.round(settings.volume * 100) + '%';
     }
     
-    // Update time displays
     const meatTime = document.getElementById('meatTime');
     const chickenTime = document.getElementById('chickenTime');
     const beefTime = document.getElementById('beefTime');
@@ -224,16 +238,14 @@ function updateSettingsUI() {
     if (chickenTime) chickenTime.textContent = formatHours(settings.chickenHours);
     if (beefTime) beefTime.textContent = formatHours(settings.beefHours);
     
-    // Update button displays
     const meatDisplay = document.getElementById('meatHoursDisplay');
     const chickenDisplay = document.getElementById('chickenHoursDisplay');
     const beefDisplay = document.getElementById('beefHoursDisplay');
     
-    if (meatDisplay) meatDisplay.textContent = formatHours(settings.meatHours);
-    if (chickenDisplay) chickenDisplay.textContent = formatHours(settings.chickenHours);
+    if (meatDisplay && !debugMode) meatDisplay.textContent = formatHours(settings.meatHours);
+    if (chickenDisplay && !debugMode) chickenDisplay.textContent = formatHours(settings.chickenHours);
     if (beefDisplay) beefDisplay.textContent = formatHours(settings.beefHours);
     
-    // Show/hide time selectors
     const meatSelector = document.getElementById('meatTimeSelector');
     const separateSelectors = document.getElementById('separateTimeSelectors');
     
@@ -267,6 +279,7 @@ function toggleNotification(type) {
     updateSettingsUI();
     
     if (type === 'sound' && settings[type]) {
+        getAudioContext();
         playBeep(settings.volume);
     }
 }
@@ -282,6 +295,7 @@ function adjustTime(type, delta) {
     settings[key] = Math.max(1, Math.min(6, settings[key] + delta));
     saveSettings();
     updateSettingsUI();
+    updateButtonsForMode();
 }
 
 function openNotificationSettings() {
@@ -361,35 +375,21 @@ function resetButtons() {
     const buttons = document.querySelectorAll('.timer-button');
     buttons.forEach(btn => btn.classList.remove('active'));
     
-    const meatBtn = document.querySelector('.timer-button.meat');
-    const chickenBtn = document.querySelector('.timer-button.chicken');
-    const beefBtn = document.querySelector('.timer-button.beef');
-    const debugBtn = document.querySelector('.timer-button.debug');
-    
-    if (meatBtn) {
-        meatBtn.innerHTML = `<div class="icon">🍗🥩</div><div>בשר</div><div id="meatHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.meatHours)}</div>`;
-    }
-    
-    if (chickenBtn) {
-        chickenBtn.innerHTML = `<div class="icon">🍗</div><div>עוף</div><div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.chickenHours)}</div>`;
-    }
-    
-    if (beefBtn) {
-        beefBtn.innerHTML = `<div class="icon">🥩</div><div>בקר</div><div id="beefHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.beefHours)}</div>`;
-    }
-    
-    if (debugBtn && debugMode) {
-        debugBtn.innerHTML = `<div class="icon">⚡</div><div>Debug</div><div style="font-size: 16px; opacity: 0.9;">1 דק׳</div>`;
-    }
+    updateButtonsForMode();
 }
 
 function startTimer(type) {
     let hours, typeHebrew, timeText;
     
-    if (type === 'debug') {
-        hours = 1 / 60;
+    // In debug mode, chicken button becomes 10 seconds
+    if (debugMode && type === 'chicken') {
+        hours = 10 / 3600; // 10 seconds in hours
         typeHebrew = 'Debug';
-        timeText = '1 דק׳';
+        timeText = '10 שניות';
+    } else if (debugMode && type === 'meat') {
+        hours = 10 / 3600;
+        typeHebrew = 'Debug';
+        timeText = '10 שניות';
     } else if (type === 'meat') {
         hours = settings.meatHours;
         typeHebrew = 'בשר';
@@ -404,13 +404,11 @@ function startTimer(type) {
         timeText = formatHours(hours);
     }
     
+    // Initialize audio on user interaction
     getAudioContext();
     
     if (timerInterval && endTime) {
-        const currentTypeHebrew = currentType === 'debug' ? 'Debug' : 
-                                 currentType === 'meat' ? 'בשר' :
-                                 currentType === 'chicken' ? 'עוף' : 'בקר';
-        const confirmRestart = confirm(`טיימר ${currentTypeHebrew} כבר פועל. האם להפסיק ולהתחיל טיימר ${typeHebrew} חדש?`);
+        const confirmRestart = confirm(`טיימר כבר פועל. האם להתחיל טיימר ${typeHebrew} חדש?`);
         if (!confirmRestart) return;
     }
     
@@ -444,9 +442,7 @@ function startTimer(type) {
     resetButtons();
     
     let activeBtn;
-    if (type === 'debug') {
-        activeBtn = document.querySelector('.timer-button.debug');
-    } else if (type === 'meat') {
+    if (type === 'meat') {
         activeBtn = document.querySelector('.timer-button.meat');
     } else if (type === 'chicken') {
         activeBtn = document.querySelector('.timer-button.chicken');
@@ -480,7 +476,7 @@ function startTimer(type) {
     localStorage.setItem('timerType', type);
 }
 
-function showNotification(timeRemaining) {
+function showNotification() {
     if ('Notification' in window && Notification.permission === 'granted') {
         const notification = new Notification('טיימר בשרי-חלבי', {
             body: 'הסתיימה ההמתנה! אתה חלבי 🥳',
@@ -494,35 +490,6 @@ function showNotification(timeRemaining) {
             window.focus();
             notification.close();
         };
-    }
-}
-
-// Update notification in background
-function updateBackgroundNotification() {
-    if ('Notification' in window && Notification.permission === 'granted' && endTime) {
-        const now = new Date().getTime();
-        const distance = endTime - now;
-        
-        if (distance > 0) {
-            const hours = Math.floor(distance / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            
-            const timeString = String(hours).padStart(2, '0') + ':' +
-                              String(minutes).padStart(2, '0') + ':' +
-                              String(seconds).padStart(2, '0');
-            
-            // This creates a persistent notification that updates
-            const notification = new Notification('טיימר בשרי-חלבי פעיל', {
-                body: `⏰ זמן נותר: ${timeString}`,
-                icon: './icon-192.png',
-                tag: 'timer-running',
-                silent: true,
-                requireInteraction: false
-            });
-            
-            setTimeout(() => notification.close(), 5000);
-        }
     }
 }
 
@@ -540,7 +507,6 @@ function updateDisplay() {
         }
         
         console.log('⏰ Timer finished!');
-        console.log('Current type:', currentType);
         console.log('Sound enabled:', settings.sound);
         console.log('Volume:', settings.volume);
         
@@ -569,7 +535,7 @@ function updateDisplay() {
             startContinuousBeep();
             document.getElementById('stopBeepBtn').style.display = 'inline-block';
         } else {
-            console.log('🔇 Sound is disabled in settings');
+            console.log('🔇 Sound is disabled');
         }
         
         localStorage.removeItem('timerEndTime');
@@ -612,9 +578,7 @@ window.onload = function() {
             document.getElementById('cancelBtn').style.display = 'inline-block';
             
             let activeBtn;
-            if (savedType === 'debug') {
-                activeBtn = document.querySelector('.timer-button.debug');
-            } else if (savedType === 'meat') {
+            if (savedType === 'meat') {
                 activeBtn = document.querySelector('.timer-button.meat');
             } else if (savedType === 'chicken') {
                 activeBtn = document.querySelector('.timer-button.chicken');
@@ -624,20 +588,16 @@ window.onload = function() {
             
             if (activeBtn) {
                 activeBtn.classList.add('active');
-                const typeHebrew = savedType === 'debug' ? 'Debug' :
-                                 savedType === 'meat' ? 'בשר' :
+                const typeHebrew = savedType === 'meat' ? 'בשר' :
                                  savedType === 'chicken' ? 'עוף' : 'בקר';
                 activeBtn.innerHTML = `<div class="icon">✓</div><div>${typeHebrew}</div><div style="font-size: 16px; opacity: 0.9;">פועל...</div>`;
             }
             
-            const typeHebrew = savedType === 'debug' ? 'Debug' :
-                             savedType === 'meat' ? 'בשר' :
+            const typeHebrew = savedType === 'meat' ? 'בשר' :
                              savedType === 'chicken' ? 'עוף' : 'בקר';
             let timeText;
             
-            if (savedType === 'debug') {
-                timeText = '1 דק׳';
-            } else if (savedType === 'meat') {
+            if (savedType === 'meat') {
                 timeText = formatHours(settings.meatHours);
             } else if (savedType === 'chicken') {
                 timeText = formatHours(settings.chickenHours);
