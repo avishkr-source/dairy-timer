@@ -77,9 +77,14 @@
             margin-bottom: 10px;
             text-shadow: 0 3px 15px rgba(0,0,0,0.7);
             min-height: 35px;
+            animation: blink 1.5s ease-in-out infinite;
         }
         .current-status-msg.dairy {
             color: #3b82f6;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
         .end-time-message {
             font-size: 24px;
@@ -379,7 +384,7 @@
                 ביטול טיימר
             </button>
             <button id="stopBeepBtn" class="control-btn stop-beep-btn" onclick="stopBeeping()" style="display: none;">
-                🔇 הפסק צפצוף
+                הפסק התראה
             </button>
             <button class="control-btn notification-btn" onclick="openNotificationSettings()">
                 ⚙️ הגדרות

@@ -368,7 +368,42 @@ function cancelTimer() {
 
 function stopBeeping() {
     stopContinuousBeep();
+    
+    // Reset everything to initial state
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    
+    if (statusTimeout) {
+        clearTimeout(statusTimeout);
+        statusTimeout = null;
+    }
+    
+    endTime = null;
+    currentType = null;
+    
+    const currentStatusMsg = document.getElementById('currentStatusMsg');
+    currentStatusMsg.textContent = '';
+    currentStatusMsg.classList.remove('dairy');
+    
+    document.getElementById('timeDisplay').textContent = '';
+    document.getElementById('status').textContent = '';
+    document.getElementById('permanentStatus').textContent = '';
+    document.getElementById('permanentStatus').classList.remove('show');
+    document.getElementById('completionMessage').textContent = '';
+    document.getElementById('completionMessage').classList.remove('show');
+    document.getElementById('cancelBtn').style.display = 'none';
     document.getElementById('stopBeepBtn').style.display = 'none';
+    updateEndTimeMessage();
+    
+    document.getElementById('pageTitle').classList.remove('hidden');
+    document.body.classList.remove('timer-active');
+    
+    resetButtons();
+    
+    localStorage.removeItem('timerEndTime');
+    localStorage.removeItem('timerType');
 }
 
 function resetButtons() {
@@ -517,7 +552,7 @@ function updateDisplay() {
         document.getElementById('permanentStatus').classList.remove('show');
         
         const completionMsg = document.getElementById('completionMessage');
-        completionMsg.innerHTML = '🎉🎉🎉<br>הסתיימה ההמתנה!<br>אתה חלבי 🥳<br>🎉🎉🎉';
+        completionMsg.textContent = 'הסתיימה ההמתנה';
         completionMsg.classList.add('show');
         
         document.getElementById('endTimeMessage').textContent = '';
