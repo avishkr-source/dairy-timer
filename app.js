@@ -150,6 +150,7 @@ let tapTimer = null;
 
 let settings = {
     sound: false,
+    vibrate: false,
     volume: 1.0,
     separateTimes: false,
     meatHours: 5,
@@ -188,10 +189,6 @@ function toggleDebugMode() {
         localStorage.setItem('debugMode', debugMode ? 'true' : 'false');
         updateDebugUI();
         updateButtonsForMode();
-        
-        // Play feedback
-        initAudio();
-        playBeep(0.3);
         
         alert(debugMode ? 'מצב Debug הופעל! ⚡\n\nכפתור העוף הופך ל-10 שניות' : 'מצב Debug כבוי');
         tapCount = 0;
@@ -249,6 +246,7 @@ function updateButtonsForMode() {
 
 function updateSettingsUI() {
     const soundCheckbox = document.getElementById('soundCheckbox');
+    const vibrateCheckbox = document.getElementById('vibrateCheckbox');
     const separateCheckbox = document.getElementById('separateCheckbox');
     const volumeControl = document.getElementById('volumeControl');
     const volumeValue = document.getElementById('volumeValue');
@@ -256,6 +254,10 @@ function updateSettingsUI() {
     
     if (soundCheckbox) {
         soundCheckbox.classList.toggle('checked', settings.sound);
+    }
+    
+    if (vibrateCheckbox) {
+        vibrateCheckbox.classList.toggle('checked', settings.vibrate);
     }
     
     if (separateCheckbox) {
@@ -326,6 +328,10 @@ function toggleNotification(type) {
         initAudio();
         playBeep(settings.volume);
     }
+    
+    if (type === 'vibrate' && settings[type] && 'vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+    }
 }
 
 function adjustVolume(value) {
@@ -362,7 +368,7 @@ function updateEndTimeMessage() {
         const minutes = endDate.getMinutes();
         const timeString = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
         endTimeMsg.textContent = `אתה תהיה חלבי בשעה ${timeString}`;
-        if (currentStatusMsg) currentStatusMsg.textContent = '🥩 אתה בשרי 🍗';
+        if (currentStatusMsg) currentStatusMsg.textContent = 'אתה בשרי';
     } else {
         endTimeMsg.textContent = '';
         if (currentStatusMsg) currentStatusMsg.textContent = '';
@@ -647,6 +653,14 @@ function updateDisplay() {
             startContinuousBeep();
         } else {
             console.log('🔇 Sound is disabled');
+        }
+        
+        if (settings.vibrate && 'vibrate' in navigator) {
+            console.log('📳 Vibrating...');
+            // Vibrate pattern: 3 long pulses
+            navigator.vibrate([500, 200, 500, 200, 500]);
+        } else {
+            console.log('Vibrate disabled or not supported');
         }
         
         localStorage.removeItem('timerEndTime');
