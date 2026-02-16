@@ -394,6 +394,11 @@
 
     <div class="torah-quote">לֹא תְבַשֵּׁל גְּדִי בַּחֲלֵב אִמּוֹ</div>
 
+    <!-- Hidden audio for PWA compatibility -->
+    <audio id="nbaBuzzer" preload="auto">
+        <source src="./nba-buzzer.wav" type="audio/wav">
+    </audio>
+
     <div id="notificationModal" class="modal">
         <div class="modal-content">
             <div class="modal-title">הגדרות טיימר</div>
@@ -474,5 +479,15 @@
     </div>
 
     <script src="./app.js"></script>
+    
+    <!-- Mobile Debug Console - Remove in production -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+        // Show debug console only in debug mode
+        if (localStorage.getItem('debugMode') === 'true') {
+            eruda.init();
+            console.log('🔍 Debug console enabled - swipe from right to open');
+        }
+    </script>
 </body>
 </html>

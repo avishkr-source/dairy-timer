@@ -32,16 +32,20 @@ async function requestNotificationPermission() {
     }
 }
 
-// Audio - USING REAL AUDIO FILES (works in installed PWA!)
+// Audio - USING HTML AUDIO ELEMENT (works better in PWA!)
 let buzzerAudio = null;
 let beepInterval = null;
 
 function initAudio() {
     if (!buzzerAudio) {
-        buzzerAudio = new Audio('./nba-buzzer.wav');
-        buzzerAudio.volume = 1.0;
-        buzzerAudio.load();
-        console.log('✅ NBA Buzzer audio loaded');
+        buzzerAudio = document.getElementById('nbaBuzzer');
+        if (buzzerAudio) {
+            buzzerAudio.volume = 1.0;
+            buzzerAudio.load();
+            console.log('✅ NBA Buzzer audio loaded from HTML element');
+        } else {
+            console.error('❌ Audio element not found!');
+        }
     }
 }
 
@@ -50,6 +54,12 @@ function playBeep(volume = 1.0) {
         console.log('🔊 Playing NBA buzzer with volume:', volume);
         
         initAudio();
+        
+        if (!buzzerAudio) {
+            console.error('❌ Buzzer audio not initialized!');
+            return;
+        }
+        
         buzzerAudio.volume = volume;
         buzzerAudio.currentTime = 0;
         
@@ -62,6 +72,8 @@ function playBeep(volume = 1.0) {
                 })
                 .catch(error => {
                     console.error('❌ Play failed:', error);
+                    console.error('Error name:', error.name);
+                    console.error('Error message:', error.message);
                 });
         }
     } catch (e) {
@@ -569,10 +581,12 @@ function updateDisplay() {
         
         showNotification();
         
+        // Always show stop button to reset everything
+        document.getElementById('stopBeepBtn').style.display = 'inline-block';
+        
         if (settings.sound) {
             console.log('🔊 Starting continuous beep...');
             startContinuousBeep();
-            document.getElementById('stopBeepBtn').style.display = 'inline-block';
         } else {
             console.log('🔇 Sound is disabled');
         }
