@@ -58,7 +58,17 @@
             width: 100%;
             position: relative;
             z-index: 1;
-            padding-bottom: 140px;
+            padding-bottom: 20px;
+        }
+        .torah-quote {
+            font-family: 'Frank Ruhl Libre', serif;
+            font-size: 20px;
+            color: black;
+            text-shadow: 0 0 10px white, 0 0 20px white;
+            opacity: 0.85;
+            text-align: center;
+            padding: 15px 20px 30px;
+            white-space: nowrap;
         }
         .page-title {
             font-size: 32px;
@@ -171,15 +181,12 @@
         }
         .completion-message.show { opacity: 1; }
         .control-buttons {
-            position: fixed;
-            bottom: 70px;
-            left: 0;
-            right: 0;
+            margin-top: 25px;
+            margin-bottom: 15px;
             display: flex;
             gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
-            z-index: 20;
             padding: 0 15px;
         }
         .control-btn {
@@ -196,19 +203,6 @@
         .cancel-btn { background: rgba(239, 68, 68, 0.9); color: white; }
         .stop-beep-btn { background: rgba(251, 146, 60, 0.9); color: white; }
         .notification-btn { background: rgba(255, 255, 255, 0.9); color: #8B5A2B; }
-        .torah-quote {
-            position: fixed;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Frank Ruhl Libre', serif;
-            font-size: 22px;
-            color: black;
-            text-shadow: 0 0 10px white, 0 0 20px white;
-            opacity: 0.85;
-            z-index: 10;
-            white-space: nowrap;
-        }
         .modal {
             display: none;
             position: fixed;

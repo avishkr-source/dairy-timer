@@ -1,4 +1,4 @@
-const CACHE_NAME = 'meat-dairy-timer-v3';
+const CACHE_NAME = 'meat-dairy-timer-v4';
 
 const urlsToCache = [
   './',
