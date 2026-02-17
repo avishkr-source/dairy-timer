@@ -156,7 +156,7 @@ let settings = {
     meatHours: 5,
     chickenHours: 5,
     beefHours: 6,
-    completionMsg: '🎉 מצבך: חלבי ☕'
+    completionMsg: '🎉 מצבך חלבי ☕'
 };
 
 function loadSettings() {
@@ -343,19 +343,19 @@ function toggleNotification(type) {
 
 function previewCompletionMsg(value) {
     const preview = document.getElementById('completionMsgPreview');
-    if (preview) preview.textContent = value || '🎉 מצבך: חלבי ☕';
+    if (preview) preview.textContent = value || '🎉 מצבך חלבי ☕';
 }
 
 function saveCompletionMsg(value) {
     const cleaned = value.trim().replace(/\n/g, ''); // מונע שבירת שורה
-    settings.completionMsg = cleaned || '🎉 מצבך: חלבי ☕';
+    settings.completionMsg = cleaned || '🎉 מצבך חלבי ☕';
     saveSettings();
     const input = document.getElementById('completionMsgInput');
     if (input) input.value = settings.completionMsg;
 }
 
 function resetCompletionMsg() {
-    settings.completionMsg = '🎉 מצבך: חלבי ☕';
+    settings.completionMsg = '🎉 מצבך חלבי ☕';
     saveSettings();
     const input = document.getElementById('completionMsgInput');
     const preview = document.getElementById('completionMsgPreview');
@@ -599,7 +599,7 @@ function showNotification() {
             // Use Service Worker notification for PWA
             navigator.serviceWorker.ready.then(function(registration) {
                 registration.showNotification('טיימר בשרי-חלבי', {
-                    body: 'הסתיימה ההמתנה! מצבך: חלבי 🥳',
+                    body: 'הסתיימה ההמתנה! מצבך חלבי 🥳',
                     icon: './icon-192.png',
                     badge: './icon-192.png',
                     tag: 'timer-complete',
@@ -615,7 +615,7 @@ function showNotification() {
             // Fallback for browser (not PWA)
             try {
                 const notification = new Notification('טיימר בשרי-חלבי', {
-                    body: 'הסתיימה ההמתנה! מצבך: חלבי 🥳',
+                    body: 'הסתיימה ההמתנה! מצבך חלבי 🥳',
                     icon: './icon-192.png',
                     badge: './icon-192.png',
                     tag: 'timer-complete',
