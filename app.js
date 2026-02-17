@@ -156,7 +156,7 @@ let settings = {
     meatHours: 5,
     chickenHours: 5,
     beefHours: 6,
-    completionMsg: '🎉 אתה חלבי ☕'
+    completionMsg: '🎉 מצבך: חלבי ☕'
 };
 
 function loadSettings() {
@@ -343,19 +343,19 @@ function toggleNotification(type) {
 
 function previewCompletionMsg(value) {
     const preview = document.getElementById('completionMsgPreview');
-    if (preview) preview.textContent = value || '🎉 אתה חלבי ☕';
+    if (preview) preview.textContent = value || '🎉 מצבך: חלבי ☕';
 }
 
 function saveCompletionMsg(value) {
     const cleaned = value.trim().replace(/\n/g, ''); // מונע שבירת שורה
-    settings.completionMsg = cleaned || '🎉 אתה חלבי ☕';
+    settings.completionMsg = cleaned || '🎉 מצבך: חלבי ☕';
     saveSettings();
     const input = document.getElementById('completionMsgInput');
     if (input) input.value = settings.completionMsg;
 }
 
 function resetCompletionMsg() {
-    settings.completionMsg = '🎉 אתה חלבי ☕';
+    settings.completionMsg = '🎉 מצבך: חלבי ☕';
     saveSettings();
     const input = document.getElementById('completionMsgInput');
     const preview = document.getElementById('completionMsgPreview');
@@ -396,8 +396,8 @@ function updateEndTimeMessage() {
         const hours = endDate.getHours();
         const minutes = endDate.getMinutes();
         const timeString = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
-        endTimeMsg.textContent = `אתה תהיה חלבי בשעה ${timeString}`;
-        if (currentStatusMsg) currentStatusMsg.textContent = 'אתה בשרי';
+        endTimeMsg.textContent = `מצבך ישתנה לחלבי בשעה ${timeString}`;
+        if (currentStatusMsg) currentStatusMsg.textContent = 'מצבך: בשרי';
     } else {
         endTimeMsg.textContent = '';
         if (currentStatusMsg) currentStatusMsg.textContent = '';
@@ -599,7 +599,7 @@ function showNotification() {
             // Use Service Worker notification for PWA
             navigator.serviceWorker.ready.then(function(registration) {
                 registration.showNotification('טיימר בשרי-חלבי', {
-                    body: 'הסתיימה ההמתנה! אתה חלבי 🥳',
+                    body: 'הסתיימה ההמתנה! מצבך: חלבי 🥳',
                     icon: './icon-192.png',
                     badge: './icon-192.png',
                     tag: 'timer-complete',
@@ -615,7 +615,7 @@ function showNotification() {
             // Fallback for browser (not PWA)
             try {
                 const notification = new Notification('טיימר בשרי-חלבי', {
-                    body: 'הסתיימה ההמתנה! אתה חלבי 🥳',
+                    body: 'הסתיימה ההמתנה! מצבך: חלבי 🥳',
                     icon: './icon-192.png',
                     badge: './icon-192.png',
                     tag: 'timer-complete',
