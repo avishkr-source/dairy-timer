@@ -52,23 +52,39 @@
             transition: background 0.5s ease;
         }
         body.timer-active::after { background: linear-gradient(135deg, rgba(139, 90, 43, 0.3) 0%, rgba(205, 133, 63, 0.3) 100%); }
+        .control-buttons {
+            position: fixed;
+            bottom: 55px;
+            left: 0;
+            right: 0;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            z-index: 20;
+            padding: 0 15px;
+        }
+        .torah-quote {
+            position: fixed;
+            bottom: 8px;
+            left: 0;
+            right: 0;
+            font-family: 'Frank Ruhl Libre', serif;
+            font-size: 18px;
+            color: black;
+            text-shadow: 0 0 10px white, 0 0 20px white;
+            opacity: 0.85;
+            text-align: center;
+            z-index: 10;
+            white-space: nowrap;
+        }
         .container {
             text-align: center;
             max-width: 100%;
             width: 100%;
             position: relative;
             z-index: 1;
-            padding-bottom: 20px;
-        }
-        .torah-quote {
-            font-family: 'Frank Ruhl Libre', serif;
-            font-size: 20px;
-            color: black;
-            text-shadow: 0 0 10px white, 0 0 20px white;
-            opacity: 0.85;
-            text-align: center;
-            padding: 15px 20px 30px;
-            white-space: nowrap;
+            padding-bottom: 110px;
         }
         .page-title {
             font-size: 32px;
@@ -87,6 +103,11 @@
             margin-bottom: 10px;
             text-shadow: 0 3px 15px rgba(0,0,0,0.7);
             min-height: 45px;
+            max-height: 50px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 0 15px;
             animation: blink 1.5s ease-in-out infinite;
         }
         .current-status-msg.dairy {
