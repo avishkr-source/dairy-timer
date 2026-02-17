@@ -226,13 +226,22 @@ function updateButtonsForMode() {
         if (meatBtn) meatBtn.style.display = 'flex';
     }
     
+    const dutchChicken = settings.chickenHours === 1 ? ' 🇳🇱' : '';
+    const dutchBeef    = settings.beefHours    === 1 ? ' 🇳🇱' : '';
+    const dutchMeat    = settings.meatHours    === 1 ? ' 🇳🇱' : '';
+    
     // Update chicken button for debug mode
     if (chickenBtn && debugMode && settings.separateTimes) {
         chickenBtn.innerHTML = `<div class="icon">⚡</div><div>Debug</div><div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">10 שניות</div>`;
         chickenBtn.style.background = 'linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%)';
     } else if (chickenBtn && settings.separateTimes) {
-        chickenBtn.innerHTML = `<div class="icon">🍗</div><div>עוף</div><div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.chickenHours)}</div>`;
+        chickenBtn.innerHTML = `<div class="icon">🍗</div><div>עוף${dutchChicken}</div><div id="chickenHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.chickenHours)}</div>`;
         chickenBtn.style.background = '#D2B48C';
+    }
+    
+    // Update beef button
+    if (beefBtn && settings.separateTimes) {
+        beefBtn.innerHTML = `<div class="icon">🥩</div><div>בקר${dutchBeef}</div><div id="beefHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.beefHours)}</div>`;
     }
     
     // Update meat button for debug mode
@@ -240,7 +249,7 @@ function updateButtonsForMode() {
         meatBtn.innerHTML = `<div class="icon">⚡</div><div>Debug</div><div id="meatHoursDisplay" style="font-size: 16px; opacity: 0.9;">10 שניות</div>`;
         meatBtn.style.background = 'linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%)';
     } else if (meatBtn && !settings.separateTimes) {
-        meatBtn.innerHTML = `<div class="icon">🍗🥩</div><div>בשר</div><div id="meatHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.meatHours)}</div>`;
+        meatBtn.innerHTML = `<div class="icon">🍗🥩</div><div>בשר${dutchMeat}</div><div id="meatHoursDisplay" style="font-size: 16px; opacity: 0.9;">${formatHours(settings.meatHours)}</div>`;
         meatBtn.style.background = '#D2B48C';
     }
 }
@@ -524,15 +533,15 @@ function startTimer(type) {
         timeText = '10 שניות';
     } else if (type === 'meat') {
         hours = settings.meatHours;
-        typeHebrew = 'בשר';
+        typeHebrew = hours === 1 ? 'בשר 🇳🇱' : 'בשר';
         timeText = formatHours(hours);
     } else if (type === 'chicken') {
         hours = settings.chickenHours;
-        typeHebrew = 'עוף';
+        typeHebrew = hours === 1 ? 'עוף 🇳🇱' : 'עוף';
         timeText = formatHours(hours);
     } else {
         hours = settings.beefHours;
-        typeHebrew = 'בקר';
+        typeHebrew = hours === 1 ? 'בקר 🇳🇱' : 'בקר';
         timeText = formatHours(hours);
     }
     
