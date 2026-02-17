@@ -155,7 +155,8 @@ let settings = {
     separateTimes: false,
     meatHours: 5,
     chickenHours: 5,
-    beefHours: 6
+    beefHours: 6,
+    completionMsg: '🎉 אתה חלבי ☕'
 };
 
 function loadSettings() {
@@ -276,6 +277,12 @@ function updateSettingsUI() {
         volumeValue.textContent = Math.round(settings.volume * 100) + '%';
     }
     
+    // Update completion message editor
+    const msgInput = document.getElementById('completionMsgInput');
+    const msgPreview = document.getElementById('completionMsgPreview');
+    if (msgInput) msgInput.value = settings.completionMsg;
+    if (msgPreview) msgPreview.textContent = settings.completionMsg;
+    
     const meatTime = document.getElementById('meatTime');
     const chickenTime = document.getElementById('chickenTime');
     const beefTime = document.getElementById('beefTime');
@@ -332,6 +339,28 @@ function toggleNotification(type) {
     if (type === 'vibrate' && settings[type] && 'vibrate' in navigator) {
         navigator.vibrate([200, 100, 200]);
     }
+}
+
+function previewCompletionMsg(value) {
+    const preview = document.getElementById('completionMsgPreview');
+    if (preview) preview.textContent = value || '🎉 אתה חלבי ☕';
+}
+
+function saveCompletionMsg(value) {
+    const cleaned = value.trim().replace(/\n/g, ''); // מונע שבירת שורה
+    settings.completionMsg = cleaned || '🎉 אתה חלבי ☕';
+    saveSettings();
+    const input = document.getElementById('completionMsgInput');
+    if (input) input.value = settings.completionMsg;
+}
+
+function resetCompletionMsg() {
+    settings.completionMsg = '🎉 אתה חלבי ☕';
+    saveSettings();
+    const input = document.getElementById('completionMsgInput');
+    const preview = document.getElementById('completionMsgPreview');
+    if (input) input.value = settings.completionMsg;
+    if (preview) preview.textContent = settings.completionMsg;
 }
 
 function adjustVolume(value) {
@@ -638,7 +667,7 @@ function updateDisplay() {
         document.getElementById('endTimeMessage').textContent = '';
         
         const currentStatusMsg = document.getElementById('currentStatusMsg');
-        currentStatusMsg.textContent = '🎉 אתה חלבי ☕';
+        currentStatusMsg.textContent = settings.completionMsg;
         currentStatusMsg.classList.add('dairy');
         
         resetButtons();
