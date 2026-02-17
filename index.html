@@ -58,7 +58,7 @@
             width: 100%;
             position: relative;
             z-index: 1;
-            padding-bottom: 80px;
+            padding-bottom: 140px;
         }
         .page-title {
             font-size: 32px;
@@ -171,11 +171,16 @@
         }
         .completion-message.show { opacity: 1; }
         .control-buttons {
-            margin-top: 20px;
+            position: fixed;
+            bottom: 70px;
+            left: 0;
+            right: 0;
             display: flex;
-            gap: 15px;
+            gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
+            z-index: 20;
+            padding: 0 15px;
         }
         .control-btn {
             padding: 12px 24px;
@@ -450,7 +455,7 @@
         </div>
     </div>
 
-    <div class="torah-quote">לֹא תְבַשֵּׁל גְּדִי בַּחֲלֵב אִמּוֹ</div>
+    <div class="torah-quote">"לֹא תְבַשֵּׁל גְּדִי בַּחֲלֵב אִמּוֹ"</div>
 
     <!-- Hidden audio for PWA compatibility -->
     <audio id="nbaBuzzer" preload="auto">

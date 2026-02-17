@@ -105,7 +105,7 @@ function startContinuousBeep() {
     console.log('🔊 Starting continuous NBA buzzer (8 times) with volume:', volume);
     
     let beepCount = 0;
-    const maxBeeps = 8;
+    const maxBeeps = 5;
     
     // Play immediately
     playBeep(volume);
@@ -397,7 +397,7 @@ function updateEndTimeMessage() {
         const minutes = endDate.getMinutes();
         const timeString = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
         endTimeMsg.textContent = `מצבך ישתנה לחלבי בשעה ${timeString}`;
-        if (currentStatusMsg) currentStatusMsg.textContent = 'מצבך: בשרי';
+        if (currentStatusMsg) currentStatusMsg.textContent = 'מצבך בשרי';
     } else {
         endTimeMsg.textContent = '';
         if (currentStatusMsg) currentStatusMsg.textContent = '';
