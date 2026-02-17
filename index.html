@@ -54,15 +54,15 @@
         body.timer-active::after { background: linear-gradient(135deg, rgba(139, 90, 43, 0.3) 0%, rgba(205, 133, 63, 0.3) 100%); }
         .control-buttons {
             position: fixed;
-            bottom: 55px;
+            bottom: 32px;
             left: 0;
             right: 0;
             display: flex;
-            gap: 12px;
+            gap: 8px;
             justify-content: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             z-index: 20;
-            padding: 0 15px;
+            padding: 0 10px;
         }
         .torah-quote {
             position: fixed;
@@ -70,7 +70,7 @@
             left: 0;
             right: 0;
             font-family: 'Frank Ruhl Libre', serif;
-            font-size: 18px;
+            font-size: 16px;
             color: black;
             text-shadow: 0 0 10px white, 0 0 20px white;
             opacity: 0.85;
@@ -84,7 +84,7 @@
             width: 100%;
             position: relative;
             z-index: 1;
-            padding-bottom: 110px;
+            padding-bottom: 90px;
         }
         .page-title {
             font-size: 32px;
@@ -97,18 +97,14 @@
         }
         .page-title.hidden { opacity: 0; transform: translateY(-20px); pointer-events: none; }
         .current-status-msg {
-            font-size: 36px;
             font-weight: bold;
             color: #ef4444;
             margin-bottom: 10px;
             text-shadow: 0 3px 15px rgba(0,0,0,0.7);
-            min-height: 45px;
-            max-height: 50px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            min-height: 40px;
             padding: 0 15px;
             animation: blink 1.5s ease-in-out infinite;
+            transition: font-size 0.2s ease;
         }
         .current-status-msg.dairy {
             color: #3b82f6;
@@ -211,14 +207,17 @@
             padding: 0 15px;
         }
         .control-btn {
-            padding: 12px 24px;
+            padding: 10px 16px;
             border: none;
             border-radius: 25px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            flex: 1;
+            max-width: 160px;
         }
         .control-btn:active { transform: scale(0.95); }
         .cancel-btn { background: rgba(239, 68, 68, 0.9); color: white; }
@@ -490,14 +489,14 @@
                             type="text" 
                             id="completionMsgInput" 
                             class="completion-msg-input"
-                            maxlength="40"
-                            placeholder="🎉 מצבך: חלבי ☕"
+                            maxlength="20"
+                            placeholder="🎉 מצבך חלבי ☕"
                             oninput="previewCompletionMsg(this.value)"
                             onchange="saveCompletionMsg(this.value)"
                         >
                         <button class="reset-msg-btn" onclick="resetCompletionMsg()">↺</button>
                     </div>
-                    <div class="completion-msg-hint">עד 40 תווים • שורה אחת</div>
+                    <div class="completion-msg-hint">עד 20 תווים • שורה אחת</div>
                 </div>
             </div>
             

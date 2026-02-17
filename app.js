@@ -341,6 +341,19 @@ function toggleNotification(type) {
     }
 }
 
+function fitStatusMsg(element) {
+    if (!element || !element.textContent.trim()) return;
+    
+    const maxWidth = window.innerWidth - 30; // 15px padding on each side
+    let fontSize = 36; // Start large
+    element.style.fontSize = fontSize + 'px';
+    
+    while (element.scrollWidth > maxWidth && fontSize > 16) {
+        fontSize -= 1;
+        element.style.fontSize = fontSize + 'px';
+    }
+}
+
 function previewCompletionMsg(value) {
     const preview = document.getElementById('completionMsgPreview');
     if (preview) preview.textContent = value || '🎉 מצבך חלבי ☕';
@@ -397,7 +410,10 @@ function updateEndTimeMessage() {
         const minutes = endDate.getMinutes();
         const timeString = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
         endTimeMsg.textContent = `מצבך ישתנה לחלבי בשעה ${timeString}`;
-        if (currentStatusMsg) currentStatusMsg.textContent = 'מצבך בשרי';
+        if (currentStatusMsg) {
+            currentStatusMsg.textContent = 'מצבך בשרי';
+            fitStatusMsg(currentStatusMsg);
+        }
     } else {
         endTimeMsg.textContent = '';
         if (currentStatusMsg) currentStatusMsg.textContent = '';
@@ -424,6 +440,7 @@ function cancelTimer() {
         const currentStatusMsg = document.getElementById('currentStatusMsg');
         currentStatusMsg.textContent = '';
         currentStatusMsg.classList.remove('dairy');
+        currentStatusMsg.style.fontSize = '36px';
         
         document.getElementById('timeDisplay').textContent = '';
         document.getElementById('status').textContent = '';
@@ -465,6 +482,7 @@ function stopBeeping() {
     const currentStatusMsg = document.getElementById('currentStatusMsg');
     currentStatusMsg.textContent = '';
     currentStatusMsg.classList.remove('dairy');
+    currentStatusMsg.style.fontSize = '36px';
     
     document.getElementById('timeDisplay').textContent = '';
     document.getElementById('status').textContent = '';
@@ -545,6 +563,7 @@ function startTimer(type) {
     
     const currentStatusMsg = document.getElementById('currentStatusMsg');
     currentStatusMsg.classList.remove('dairy');
+    currentStatusMsg.style.fontSize = '36px';
     
     document.getElementById('pageTitle').classList.add('hidden');
     document.body.classList.add('timer-active');
@@ -669,6 +688,7 @@ function updateDisplay() {
         const currentStatusMsg = document.getElementById('currentStatusMsg');
         currentStatusMsg.textContent = settings.completionMsg;
         currentStatusMsg.classList.add('dairy');
+        fitStatusMsg(currentStatusMsg);
         
         resetButtons();
         
